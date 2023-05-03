@@ -1,0 +1,8 @@
+# executables
+bin/build
+*.exe
+*.out
+*.txt
+# libraries
+bin/libs
+bin/noxim
