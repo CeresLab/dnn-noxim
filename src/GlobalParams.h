@@ -29,9 +29,6 @@ using namespace std;
 #define DIRECTION_SOUTH         2
 #define DIRECTION_WEST          3
 #define DIRECTION_LOCAL         4
-#define DIRECTION_HUB           5
-#define DIRECTION_HUB_RELAY     5000
-#define DIRECTION_WIRELESS    747
 
 #define MAX_VIRTUAL_CHANNELS	8
 #define DEFAULT_VC 		0
@@ -58,11 +55,6 @@ using namespace std;
 #define ROUTING_DYAD           "DYAD"
 #define ROUTING_TABLE_BASED    "TABLE_BASED"
 
-
-// Channel selection 
-#define CHSEL_RANDOM 0
-#define CHSEL_FIRST_FREE 1
-
 // Traffic distribution
 #define TRAFFIC_RANDOM         "TRAFFIC_RANDOM"
 #define TRAFFIC_TRANSPOSE1     "TRAFFIC_TRANSPOSE1"
@@ -81,31 +73,6 @@ using namespace std;
 #define VERBOSE_MEDIUM         "VERBOSE_MEDIUM"
 #define VERBOSE_HIGH           "VERBOSE_HIGH"
 
-
-// Wireless MAC constants
-#define RELEASE_CHANNEL 1
-#define HOLD_CHANNEL 	2
-
-#define TOKEN_HOLD             "TOKEN_HOLD"
-#define TOKEN_MAX_HOLD         "TOKEN_MAX_HOLD"
-#define TOKEN_PACKET           "TOKEN_PACKET"
-
-typedef struct {
-    pair<double, double> ber;
-    int dataRate;
-    vector<string> macPolicy;
-} ChannelConfig;
-
-typedef struct {
-    vector<int> attachedNodes;
-    vector<int> rxChannels;
-    vector<int> txChannels;
-    int toTileBufferSize;
-    int fromTileBufferSize;
-    int txBufferSize;
-    int rxBufferSize;
-} HubConfig;
-
 typedef struct {
     map<pair <int, int>, double> front;
     map<pair <int, int>, double> pop;
@@ -123,19 +90,9 @@ typedef struct {
 } RouterPowerConfig;
 
 typedef struct {
-    pair<double, double> transceiver_leakage;
-    pair<double, double> transceiver_biasing;
-    double rx_dynamic;
-    double rx_snooping;
-    double default_tx_energy;
-    map<pair <int, int>, double> transmitter_attenuation_map;
-} HubPowerConfig;
-
-typedef struct {
     BufferPowerConfig bufferPowerConfig;
     LinkBitLinePowerConfig linkBitLinePowerConfig;
     RouterPowerConfig routerPowerConfig;
-    HubPowerConfig hubPowerConfig;
 } PowerConfig;
 
 struct GlobalParams {
@@ -147,7 +104,6 @@ struct GlobalParams {
     static int mesh_dim_y;
     static int n_delta_tiles;
     static double r2r_link_length;
-    static double r2h_link_length;
     static int buffer_depth;
     static int flit_size;
     static int min_packet_size;
@@ -174,18 +130,10 @@ struct GlobalParams {
     static double dyad_threshold;
     static unsigned int max_volume_to_be_drained;
     static bool show_buffer_stats;
-    static bool use_winoc;
-    static int winoc_dst_hops;
     static bool use_powermanager;
-    static ChannelConfig default_channel_configuration;
-    static map<int, ChannelConfig> channel_configuration;
-    static HubConfig default_hub_configuration;
-    static map<int, HubConfig> hub_configuration;
-    static map<int, int> hub_for_tile;
     static PowerConfig power_configuration;
     // out of yaml configuration
     static bool ascii_monitor;
-    static int channel_selection;
 };
 
 #endif

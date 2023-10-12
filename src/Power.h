@@ -34,45 +34,18 @@ class Power {
 			 string routing_function,
 			 string selection_function);
 
-    void configureHub(int link_width, 
-	              int buffer_to_tile_depth, 
-	              int buffer_from_tile_depth, 
-		      int buffer_item_size, 
-		      int antenna_buffer_rx_depth, 
-		      int antenna_buffer_tx_depth, 
-		      int antenna_buffer_item_size, 
-		      int data_rate_gbs);
-
     void bufferRouterPush(); 
     void bufferRouterPop(); 
     void bufferRouterFront(); 
-    void bufferToTilePush(); 
-    void bufferToTilePop(); 
-    void bufferToTileFront(); 
-    void bufferFromTilePush(); 
-    void bufferFromTilePop(); 
-    void bufferFromTileFront(); 
-    void antennaBufferPush();
-    void antennaBufferPop();
-
-    void antennaBufferFront(); 
-    void wirelessTx(int src,int dst,int length);
-    void wirelessDynamicRx();
-    void wirelessSnooping();
 
     void routing();
     void selection(); 
     void crossBar(); 
-    void r2hLink(); 
     void r2rLink(); 
     void networkInterface();
 
     void leakageBufferRouter();
-    void leakageBufferToTile();
-    void leakageBufferFromTile();
-    void leakageAntennaBuffer();
     void leakageLinkRouter2Router();
-    void leakageLinkRouter2Hub();
     void leakageRouter();
     void leakageTransceiverRx();
     void leakageTransceiverTx();

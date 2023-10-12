@@ -58,7 +58,6 @@ SC_MODULE(ProcessingElement)
     Packet trafficBitReversal();	// Bit-reversal destination distribution
     Packet trafficShuffle();	// Shuffle destination distribution
     Packet trafficButterfly();	// Butterfly destination distribution
-    Packet trafficLocal();	// Random with locality
     Packet trafficULocal();	// Random with locality
 
     GlobalTrafficTable *traffic_table;	// Reference to the Global traffic Table

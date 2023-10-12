@@ -6,3 +6,4 @@ bin/build
 # libraries
 bin/libs
 bin/noxim
+tmp

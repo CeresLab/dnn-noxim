@@ -128,8 +128,6 @@ struct Flit {
     int hop_no;			// Current number of hops from source to destination
     bool use_low_voltage_path;
 
-    int hub_relay_node;
-
     inline bool operator ==(const Flit & flit) const {
 	return (flit.src_id == src_id && flit.dst_id == dst_id
 		&& flit.flit_type == flit_type
@@ -153,24 +151,11 @@ enum
     BUFFER_PUSH_PWR_D,
     BUFFER_POP_PWR_D,
     BUFFER_FRONT_PWR_D,
-    BUFFER_TO_TILE_PUSH_PWR_D,
-    BUFFER_TO_TILE_POP_PWR_D,
-    BUFFER_TO_TILE_FRONT_PWR_D,
-    BUFFER_FROM_TILE_PUSH_PWR_D,
-    BUFFER_FROM_TILE_POP_PWR_D,
-    BUFFER_FROM_TILE_FRONT_PWR_D,
-    ANTENNA_BUFFER_PUSH_PWR_D,
-    ANTENNA_BUFFER_POP_PWR_D,
-    ANTENNA_BUFFER_FRONT_PWR_D,
     ROUTING_PWR_D,
     SELECTION_PWR_D,
     CROSSBAR_PWR_D,
     LINK_R2R_PWR_D,
-    LINK_R2H_PWR_D,
     NI_PWR_D,
-    WIRELESS_TX,
-    WIRELESS_DYNAMIC_RX_PWR,
-    WIRELESS_SNOOPING,
     NO_BREAKDOWN_ENTRIES_D
 };
 
@@ -179,10 +164,6 @@ enum
     TRANSCEIVER_RX_PWR_BIASING,
     TRANSCEIVER_TX_PWR_BIASING,
     BUFFER_ROUTER_PWR_S,
-    BUFFER_TO_TILE_PWR_S,
-    BUFFER_FROM_TILE_PWR_S,
-    ANTENNA_BUFFER_PWR_S,
-    LINK_R2H_PWR_S,
     ROUTING_PWR_S,
     SELECTION_PWR_S,
     CROSSBAR_PWR_S,

@@ -71,8 +71,6 @@ Flit ProcessingElement::nextFlit()
     flit.hop_no = 0;
     //  flit.payload     = DEFAULT_PAYLOAD;
 
-    flit.hub_relay_node = NOT_VALID;
-
     if (packet.size == packet.flit_left)
 	flit.flit_type = FLIT_TYPE_HEAD;
     else if (packet.flit_left == 1)
@@ -133,8 +131,6 @@ bool ProcessingElement::canShot(Packet & packet)
 		    packet = trafficShuffle();
         else if (GlobalParams::traffic_distribution == TRAFFIC_BUTTERFLY)
 		    packet = trafficButterfly();
-        else if (GlobalParams::traffic_distribution == TRAFFIC_LOCAL)
-		    packet = trafficLocal();
         else if (GlobalParams::traffic_distribution == TRAFFIC_ULOCAL)
 		    packet = trafficULocal();
         else {
@@ -178,41 +174,6 @@ bool ProcessingElement::canShot(Packet & packet)
 
     return shot;
 }
-
-
-Packet ProcessingElement::trafficLocal()
-{
-    Packet p;
-    p.src_id = local_id;
-    double rnd = rand() / (double) RAND_MAX;
-
-    vector<int> dst_set;
-
-    int max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y);
-
-    for (int i=0;i<max_id;i++)
-    {
-	if (rnd<=GlobalParams::locality)
-	{
-	    if (local_id!=i && sameRadioHub(local_id,i))
-		dst_set.push_back(i);
-	}
-	else
-	    if (!sameRadioHub(local_id,i))
-		dst_set.push_back(i);
-    }
-
-
-    int i_rnd = rand()%dst_set.size();
-
-    p.dst_id = dst_set[i_rnd];
-    p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-    p.size = p.flit_left = getRandomSize();
-    p.vc_id = randInt(0,GlobalParams::n_virtual_channels-1);
-    
-    return p;
-}
-
 
 int ProcessingElement::findRandomDestination(int id, int hops)
 {

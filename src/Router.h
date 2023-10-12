@@ -40,15 +40,15 @@ SC_MODULE(Router)
     sc_in <bool> reset;                           // The reset signal for the router
 
     // number of ports: 4 mesh directions + local + wireless 
-    sc_in <Flit> flit_rx[DIRECTIONS + 2];	  // The input channels 
-    sc_in <bool> req_rx[DIRECTIONS + 2];	  // The requests associated with the input channels
-    sc_out <bool> ack_rx[DIRECTIONS + 2];	  // The outgoing ack signals associated with the input channels
-    sc_out <TBufferFullStatus> buffer_full_status_rx[DIRECTIONS+2];
+    sc_in <Flit> flit_rx[DIRECTIONS + 1];	  // The input channels 
+    sc_in <bool> req_rx[DIRECTIONS + 1];	  // The requests associated with the input channels
+    sc_out <bool> ack_rx[DIRECTIONS + 1];	  // The outgoing ack signals associated with the input channels
+    sc_out <TBufferFullStatus> buffer_full_status_rx[DIRECTIONS+1];
 
-    sc_out <Flit> flit_tx[DIRECTIONS + 2];   // The output channels
-    sc_out <bool> req_tx[DIRECTIONS + 2];	  // The requests associated with the output channels
-    sc_in <bool> ack_tx[DIRECTIONS + 2];	  // The outgoing ack signals associated with the output channels
-    sc_in <TBufferFullStatus> buffer_full_status_tx[DIRECTIONS+2];
+    sc_out <Flit> flit_tx[DIRECTIONS + 1];   // The output channels
+    sc_out <bool> req_tx[DIRECTIONS + 1];	  // The requests associated with the output channels
+    sc_in <bool> ack_tx[DIRECTIONS + 1];	  // The outgoing ack signals associated with the output channels
+    sc_in <TBufferFullStatus> buffer_full_status_tx[DIRECTIONS+1];
 
     sc_out <int> free_slots[DIRECTIONS + 1];
     sc_in <int> free_slots_neighbor[DIRECTIONS + 1];
@@ -62,9 +62,9 @@ SC_MODULE(Router)
     int local_id;		                // Unique ID
     int routing_type;		                // Type of routing algorithm
     int selection_type;
-    BufferBank buffer[DIRECTIONS + 2];		// buffer[direction][virtual_channel] 
-    bool current_level_rx[DIRECTIONS + 2];	// Current level for Alternating Bit Protocol (ABP)
-    bool current_level_tx[DIRECTIONS + 2];	// Current level for Alternating Bit Protocol (ABP)
+    BufferBank buffer[DIRECTIONS + 1];		// buffer[direction][virtual_channel] 
+    bool current_level_rx[DIRECTIONS + 1];	// Current level for Alternating Bit Protocol (ABP)
+    bool current_level_tx[DIRECTIONS + 1];	// Current level for Alternating Bit Protocol (ABP)
     Stats stats;		                // Statistics
     Power power;
     LocalRoutingTable routing_table;		// Routing table
@@ -133,14 +133,11 @@ SC_MODULE(Router)
     int start_from_port;	     // Port from which to start the reservation cycle
     int start_from_vc[DIRECTIONS+2]; // VC from which to start the reservation cycle for the specific port
 
-    vector<int> nextDeltaHops(RouteData rd);
   public:
     unsigned int local_drained;
 
     bool inCongestion();
     void ShowBuffersStats(std::ostream & out);
-
-    bool connectedHubs(int src_hub, int dst_hub);
 };
 
 #endif

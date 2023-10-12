@@ -66,7 +66,6 @@ void loadConfiguration() {
     }
 
     GlobalParams::r2r_link_length = readParam<double>(config, "r2r_link_length");
-    GlobalParams::r2h_link_length = readParam<double>(config, "r2h_link_length");
     GlobalParams::buffer_depth = readParam<int>(config, "buffer_depth");
     GlobalParams::flit_size = readParam<int>(config, "flit_size");
     GlobalParams::min_packet_size = readParam<int>(config, "min_packet_size");
@@ -89,101 +88,10 @@ void loadConfiguration() {
     GlobalParams::max_volume_to_be_drained = readParam<unsigned int>(config, "max_volume_to_be_drained");
     //GlobalParams::hotspots;
     GlobalParams::show_buffer_stats = readParam<bool>(config, "show_buffer_stats");
-    GlobalParams::use_winoc = readParam<bool>(config, "use_winoc");
-    GlobalParams::winoc_dst_hops = readParam<int>(config, "winoc_dst_hops",0);
     GlobalParams::use_powermanager = readParam<bool>(config, "use_wirxsleep");
     
-
-    set<int> channelSet;
-
-    GlobalParams::default_hub_configuration = config["Hubs"]["defaults"].as<HubConfig>();
-
-    for(YAML::const_iterator hubs_it = config["Hubs"].begin(); 
-        hubs_it != config["Hubs"].end();
-        ++hubs_it)
-    {   
-        int hub_id = hubs_it->first.as<int>(-1);
-        if (hub_id < 0)
-            continue;
-
-        YAML::Node hub_config_node = hubs_it->second;
-
-        GlobalParams::hub_configuration[hub_id] = hub_config_node.as<HubConfig>();
-
-        copy(GlobalParams::hub_configuration[hub_id].rxChannels.begin(), GlobalParams::hub_configuration[hub_id].rxChannels.end(), inserter(channelSet, channelSet.end()));
-        copy(GlobalParams::hub_configuration[hub_id].txChannels.begin(), GlobalParams::hub_configuration[hub_id].txChannels.end(), inserter(channelSet, channelSet.end()));
-    }
-
-    YAML::Node default_channel_config_node = config["RadioChannels"]["defaults"];
-    GlobalParams::default_channel_configuration = default_channel_config_node.as<ChannelConfig>();
-
-    for (set<int>::iterator it = channelSet.begin(); it != channelSet.end(); ++it) {
-        GlobalParams::channel_configuration[*it] = default_channel_config_node.as<ChannelConfig>();
-    }
-
-    for(YAML::const_iterator channels_it= config["RadioChannels"].begin(); 
-        channels_it != config["RadioChannels"].end();
-        ++channels_it)
-    {    
-        int channel_id = channels_it->first.as<int>(-1);
-        if (channel_id < 0)
-            continue;
-
-        YAML::Node channel_config_node = channels_it->second;
-
-        GlobalParams::channel_configuration[channel_id] = channel_config_node.as<ChannelConfig>(); 
-    }
-
     GlobalParams::power_configuration = power_config["Energy"].as<PowerConfig>();
 }
-
-void setBufferToTile(int depth)
-{
-    for(YAML::const_iterator hubs_it = config["Hubs"].begin(); hubs_it != config["Hubs"].end(); ++hubs_it)
-    {   
-        int hub_id = hubs_it->first.as<int>(-1);
-        if (hub_id < 0)
-            continue;
-
-        YAML::Node hub_config_node = hubs_it->second;
-
-	GlobalParams::hub_configuration[hub_id].toTileBufferSize = depth;
-
-    }
-
-}
-void setBufferFromTile(int depth)
-{
-    for(YAML::const_iterator hubs_it = config["Hubs"].begin(); hubs_it != config["Hubs"].end(); ++hubs_it)
-    {   
-        int hub_id = hubs_it->first.as<int>(-1);
-        if (hub_id < 0)
-            continue;
-
-        YAML::Node hub_config_node = hubs_it->second;
-
-	GlobalParams::hub_configuration[hub_id].fromTileBufferSize = depth;
-
-    }
-
-}
-void setBufferAntenna(int depth)
-{
-    for(YAML::const_iterator hubs_it = config["Hubs"].begin(); hubs_it != config["Hubs"].end(); ++hubs_it)
-    {   
-        int hub_id = hubs_it->first.as<int>(-1);
-        if (hub_id < 0)
-            continue;
-
-        YAML::Node hub_config_node = hubs_it->second;
-
-	GlobalParams::hub_configuration[hub_id].rxBufferSize = depth;
-	GlobalParams::hub_configuration[hub_id].txBufferSize = depth;
-
-    }
-
-}
-
 
 void showHelp(char selfname[])
 {
@@ -197,13 +105,7 @@ void showHelp(char selfname[])
          << "\t-dimx N\t\t\tSet the mesh X dimension" << endl
          << "\t-dimy N\t\t\tSet the mesh Y dimension" << endl
          << "\t-buffer N\t\tSet the depth of router input buffers [flits]" << endl
-         << "\t-buffer_tt N\t\tSet the depth of hub buffers to tile [flits]" << endl
-         << "\t-buffer_ft N\t\tSet the depth of hub buffers to tile [flits]" << endl
-         << "\t-buffer_antenna N\tSet the depth of hub antenna buffers (RX/TX) [flits]" << endl
 	 << "\t-vc N\t\t\tNumber of virtual channels" << endl
-         << "\t-winoc\t\t\tEnable radio hub wireless transmission" << endl
-         << "\t-winoc_dst_hops\t\t\tMax number of hops between target RadioHub and destination node" << endl
-         << "\t-wirxsleep\t\tEnable radio hub wireless power manager" << endl
          << "\t-size Nmin Nmax\t\tSet the minimum and maximum packet size [flits]" << endl
          << "\t-flit N\t\t\tSet the flit size [bit]" << endl
          << "\t-topology TYPE\t\tSet the topology to one of the following:" << endl
@@ -290,11 +192,6 @@ void checkConfiguration()
 			cerr << "Error: dimy must be greater than 1" << endl;
 			exit(1);
 		}
-		if (GlobalParams::winoc_dst_hops>0)
-		{
-			cerr << "Error: winoc_dst_hops currently supported only in delta topologies" << endl;
-			exit(1);
-		}
 	}
 	else // other delta topologies
 	{
@@ -312,19 +209,6 @@ void checkConfiguration()
 		if (GlobalParams::routing_algorithm!="DELTA")
 		{
 			cerr << "Error: BUTTERFLY/OMEGA/BASELINE topologies only supported in DELTA routing algorithm " << endl;
-			exit(1);
-		}
-	}
-
-	if (GlobalParams::winoc_dst_hops>0) {
-		if (GlobalParams::topology != TOPOLOGY_BUTTERFLY)
-		{
-			cerr << "Error: winoc_dst_hops currently supported only in BUTTERFLY topology" << endl;
-            exit(1);
-        }
-		if (!GlobalParams::use_winoc)
-		{
-			cerr << "Error: winoc_dst_hops makes sense only when -winoc is enabled!" << endl;
 			exit(1);
 		}
 	}
@@ -478,26 +362,10 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 
 	    else if (!strcmp(arg_vet[i], "-buffer"))
 		GlobalParams::buffer_depth = atoi(arg_vet[++i]);
-	    else if (!strcmp(arg_vet[i], "-buffer_tt"))
-		setBufferToTile(atoi(arg_vet[++i]));
-	    else if (!strcmp(arg_vet[i], "-buffer_ft"))
-		setBufferFromTile(atoi(arg_vet[++i]));
-	    else if (!strcmp(arg_vet[i], "-buffer_antenna"))
-		setBufferAntenna(atoi(arg_vet[++i]));
 	    else if (!strcmp(arg_vet[i], "-vc"))
 		GlobalParams::n_virtual_channels = (atoi(arg_vet[++i]));
 	    else if (!strcmp(arg_vet[i], "-flit"))
 		GlobalParams::flit_size = atoi(arg_vet[++i]);
-	    else if (!strcmp(arg_vet[i], "-winoc")) 
-		GlobalParams::use_winoc = true;
-	    else if (!strcmp(arg_vet[i], "-winoc_dst_hops")) 
-	    {
-            GlobalParams::winoc_dst_hops = atoi(arg_vet[++i]);
-	    }
-	    else if (!strcmp(arg_vet[i], "-wirxsleep")) 
-	    {
-		GlobalParams::use_powermanager = true;
-	    }
 	    else if (!strcmp(arg_vet[i], "-size")) 
 	    {
 		GlobalParams::min_packet_size = atoi(arg_vet[++i]);

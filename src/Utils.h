@@ -220,33 +220,6 @@ inline int coord2Id(const Coord & coord)
     return id;
 }
 
-inline bool sameRadioHub(int id1, int id2)
-{
-    map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(id1); 
-    map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(id2); 
-
-    assert( (it1 != GlobalParams::hub_for_tile.end()) && "Specified Tile is not connected to any Hub");
-    assert( (it2 != GlobalParams::hub_for_tile.end()) && "Specified Tile is not connected to any Hub");
-
-    return (it1->second == it2->second);
-}
-
-inline bool hasRadioHub(int id)
-{
-    map<int, int>::iterator it = GlobalParams::hub_for_tile.find(id);
-
-    return (it != GlobalParams::hub_for_tile.end());
-}
-
-
-inline int tile2Hub(int id)
-{
-    map<int, int>::iterator it = GlobalParams::hub_for_tile.find(id); 
-    assert( (it != GlobalParams::hub_for_tile.end()) && "Specified Tile is not connected to any Hub");
-    return it->second;
-}
-
-
 inline void printMap(string label, const map<string,double> & m,std::ostream & out)
 {
     out << label << " = [" << endl;
