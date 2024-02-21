@@ -10,7 +10,7 @@
  */
 
 #ifndef __NOXIMGLOBALPARAMS_H__
-#define __NOXIMGLOBALPARAMS_H__ 
+#define __NOXIMGLOBALPARAMS_H__
 
 #include <map>
 #include <utility>
@@ -19,19 +19,19 @@
 
 using namespace std;
 
-#define CONFIG_FILENAME        "config.yaml"
-#define POWER_CONFIG_FILENAME  "power.yaml"
+#define CONFIG_FILENAME "config.yaml"
+#define POWER_CONFIG_FILENAME "power.yaml"
 
 // Define the directions as numbers
-#define DIRECTIONS              4
-#define DIRECTION_NORTH         0
-#define DIRECTION_EAST          1
-#define DIRECTION_SOUTH         2
-#define DIRECTION_WEST          3
-#define DIRECTION_LOCAL         4
+#define DIRECTIONS 4
+#define DIRECTION_NORTH 0
+#define DIRECTION_EAST 1
+#define DIRECTION_SOUTH 2
+#define DIRECTION_WEST 3
+#define DIRECTION_LOCAL 4
 
-#define MAX_VIRTUAL_CHANNELS	8
-#define DEFAULT_VC 		0
+#define MAX_VIRTUAL_CHANNELS 1
+#define DEFAULT_VC 0
 
 #define RT_AVAILABLE 1
 #define RT_ALREADY_SAME -1
@@ -39,63 +39,67 @@ using namespace std;
 #define RT_OUTVC_BUSY -3
 
 // Generic not reserved resource
-#define NOT_RESERVED          -2
+#define NOT_RESERVED -2
 
 // To mark invalid or non exhistent values
-#define NOT_VALID             -1
+#define NOT_VALID -1
 
-//Topologies
-#define TOPOLOGY_MESH          "MESH"
-//Delta Networks Topologies
-#define TOPOLOGY_BASELINE      "BASELINE"
-#define TOPOLOGY_BUTTERFLY     "BUTTERFLY"
-#define TOPOLOGY_OMEGA         "OMEGA"
+// Topologies
+#define TOPOLOGY_MESH "MESH"
+// Delta Networks Topologies
+#define TOPOLOGY_BASELINE "BASELINE"
+#define TOPOLOGY_BUTTERFLY "BUTTERFLY"
+#define TOPOLOGY_OMEGA "OMEGA"
 
 // Routing algorithms
-#define ROUTING_DYAD           "DYAD"
-#define ROUTING_TABLE_BASED    "TABLE_BASED"
+#define ROUTING_DYAD "DYAD"
+#define ROUTING_TABLE_BASED "TABLE_BASED"
 
 // Traffic distribution
-#define TRAFFIC_RANDOM         "TRAFFIC_RANDOM"
-#define TRAFFIC_TRANSPOSE1     "TRAFFIC_TRANSPOSE1"
-#define TRAFFIC_TRANSPOSE2     "TRAFFIC_TRANSPOSE2"
-#define TRAFFIC_HOTSPOT        "TRAFFIC_HOTSPOT"
-#define TRAFFIC_TABLE_BASED    "TRAFFIC_TABLE_BASED"
-#define TRAFFIC_BIT_REVERSAL   "TRAFFIC_BIT_REVERSAL"
-#define TRAFFIC_SHUFFLE        "TRAFFIC_SHUFFLE"
-#define TRAFFIC_BUTTERFLY      "TRAFFIC_BUTTERFLY"
-#define TRAFFIC_LOCAL	       "TRAFFIC_LOCAL"
-#define TRAFFIC_ULOCAL	       "TRAFFIC_ULOCAL"
+#define TRAFFIC_RANDOM "TRAFFIC_RANDOM"
+#define TRAFFIC_TRANSPOSE1 "TRAFFIC_TRANSPOSE1"
+#define TRAFFIC_TRANSPOSE2 "TRAFFIC_TRANSPOSE2"
+#define TRAFFIC_HOTSPOT "TRAFFIC_HOTSPOT"
+#define TRAFFIC_TABLE_BASED "TRAFFIC_TABLE_BASED"
+#define TRAFFIC_BIT_REVERSAL "TRAFFIC_BIT_REVERSAL"
+#define TRAFFIC_SHUFFLE "TRAFFIC_SHUFFLE"
+#define TRAFFIC_BUTTERFLY "TRAFFIC_BUTTERFLY"
+#define TRAFFIC_LOCAL "TRAFFIC_LOCAL"
+#define TRAFFIC_ULOCAL "TRAFFIC_ULOCAL"
 
 // Verbosity levels
-#define VERBOSE_OFF            "VERBOSE_OFF"
-#define VERBOSE_LOW            "VERBOSE_LOW"
-#define VERBOSE_MEDIUM         "VERBOSE_MEDIUM"
-#define VERBOSE_HIGH           "VERBOSE_HIGH"
+#define VERBOSE_OFF "VERBOSE_OFF"
+#define VERBOSE_LOW "VERBOSE_LOW"
+#define VERBOSE_MEDIUM "VERBOSE_MEDIUM"
+#define VERBOSE_HIGH "VERBOSE_HIGH"
 
-typedef struct {
-    map<pair <int, int>, double> front;
-    map<pair <int, int>, double> pop;
-    map<pair <int, int>, double> push;
-    map<pair <int, int>, double> leakage;
+typedef struct
+{
+    map<pair<int, int>, double> front;
+    map<pair<int, int>, double> pop;
+    map<pair<int, int>, double> push;
+    map<pair<int, int>, double> leakage;
 } BufferPowerConfig;
 
-typedef map<double, pair <double, double> > LinkBitLinePowerConfig;
+typedef map<double, pair<double, double>> LinkBitLinePowerConfig;
 
-typedef struct {
-    map<pair<double, double>, pair<double, double> > crossbar_pm;
-    map<int, pair<double, double> > network_interface;
-    map<string, pair<double, double> > routing_algorithm_pm;
-    map<string, pair<double, double> > selection_strategy_pm;
+typedef struct
+{
+    map<pair<double, double>, pair<double, double>> crossbar_pm;
+    map<int, pair<double, double>> network_interface;
+    map<string, pair<double, double>> routing_algorithm_pm;
+    map<string, pair<double, double>> selection_strategy_pm;
 } RouterPowerConfig;
 
-typedef struct {
+typedef struct
+{
     BufferPowerConfig bufferPowerConfig;
     LinkBitLinePowerConfig linkBitLinePowerConfig;
     RouterPowerConfig routerPowerConfig;
 } PowerConfig;
 
-struct GlobalParams {
+struct GlobalParams
+{
     static string verbose_mode;
     static int trace_mode;
     static string trace_filename;
@@ -126,7 +130,7 @@ struct GlobalParams {
     static int stats_warm_up_time;
     static int rnd_generator_seed;
     static bool detailed;
-    static vector <pair <int, double> > hotspots;
+    static vector<pair<int, double>> hotspots;
     static double dyad_threshold;
     static unsigned int max_volume_to_be_drained;
     static bool show_buffer_stats;
