@@ -82,5 +82,6 @@ private:
 };
 
 typedef Buffer BufferBank[MAX_VIRTUAL_CHANNELS];
+typedef Buffer PeBufferBank;
 
 #endif

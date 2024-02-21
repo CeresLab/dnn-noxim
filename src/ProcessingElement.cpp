@@ -27,11 +27,11 @@ void ProcessingElement::rxProcess()
     {
         if (req_rx.read() == 1 - current_level_rx)
         {
-            if (!pebuffer[0].IsFull())
+            if (!pebuffer.IsFull())
             {
                 Flit flit_tmp = flit_rx.read();
                 std::cout << "Flit: " << flit_tmp.payload.data << endl;
-                pebuffer[0].Push(flit_tmp);
+                pebuffer.Push(flit_tmp);
                 current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
             }
         }

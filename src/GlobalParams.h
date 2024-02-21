@@ -30,7 +30,7 @@ using namespace std;
 #define DIRECTION_WEST 3
 #define DIRECTION_LOCAL 4
 
-#define MAX_VIRTUAL_CHANNELS 1
+#define MAX_VIRTUAL_CHANNELS 8
 #define DEFAULT_VC 0
 
 #define RT_AVAILABLE 1
