@@ -141,7 +141,7 @@ use_wirxsleep: false
 #   VERBOSE_LOW
 #   VERBOSE_MEDIUM
 #   VERBOSE_HIGH
-verbose_mode: VERBOSE_HIGH
+verbose_mode: VERBOSE_OFF
 
 # Trace
 trace_mode: false
@@ -165,4 +165,4 @@ probability_of_retransmission: 0.01
 traffic_distribution: TRAFFIC_TABLE_BASED
 # when traffic table based is specified, use the following
 # configuration file
-traffic_table_filename: "t.txt"
+traffic_table_filename: "tt.txt"

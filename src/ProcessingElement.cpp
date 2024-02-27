@@ -30,7 +30,9 @@ void ProcessingElement::rxProcess()
             if (!pebuffer.IsFull())
             {
                 Flit flit_tmp = flit_rx.read();
-                std::cout << "Flit: " << flit_tmp.payload.data << endl;
+                std::cout << " PE RX: => "
+                          << "Flit: " << flit_tmp.payload.data << endl;
+                // std::cout << "Flit: " << flit_tmp.payload.data << endl;
                 pebuffer.Push(flit_tmp);
                 current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
             }
@@ -51,22 +53,103 @@ void ProcessingElement::txProcess()
     {
         Packet packet;
 
-        if (canShot(packet))
-        {
-            packet_queue.push(packet);
-            transmittedAtPreviousCycle = true;
-        }
-        else
-            transmittedAtPreviousCycle = false;
+        // if (canShot(packet))
+        // {
+        //     packet_queue.push(packet);
+        //     transmittedAtPreviousCycle = true;
+        // }
+        // else
+        //     transmittedAtPreviousCycle = false;
+
+        // if (ack_tx.read() == current_level_tx)
+        // {
+        //     if (!packet_queue.empty())
+        //     {
+        //         Flit flit = nextFlit();                  // Generate a new flit
+        //         flit_tx->write(flit);                    // Send the generated flit
+        //         current_level_tx = 1 - current_level_tx; // Negate the old value for Alternating Bit Protocol (ABP)
+        //         req_tx.write(current_level_tx);
+        //     }
+        // }
 
         if (ack_tx.read() == current_level_tx)
         {
-            if (!packet_queue.empty())
+            if (!pebuffer.IsEmpty())
             {
-                Flit flit = nextFlit();                  // Generate a new flit
+                Flit flit = pebuffer.Front();            // Generate a new flit
                 flit_tx->write(flit);                    // Send the generated flit
                 current_level_tx = 1 - current_level_tx; // Negate the old value for Alternating Bit Protocol (ABP)
                 req_tx.write(current_level_tx);
+            }
+        }
+    }
+}
+
+void ProcessingElement::rxPeProcess()
+{
+    if (reset.read())
+    {
+        ack_rx_pe.write(0);
+        current_level_rx_pe = 0;
+    }
+    else
+    {
+        if (req_rx_pe.read() == 1 - current_level_rx_pe)
+        {
+            if (!pebuffer.IsFull())
+            {
+                Flit flit_tmp = flit_rx_pe.read();
+                // std::cout << "Flit: " << flit_tmp.payload.data << endl;
+                pebuffer.Push(flit_tmp);
+                current_level_rx_pe = 1 - current_level_rx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
+            }
+        }
+        ack_rx_pe.write(current_level_rx_pe);
+    }
+}
+
+void ProcessingElement::txPeProcess()
+{
+    // if (reset.read())
+    // {
+    //     req_tx_pe.write(0);
+    //     current_level_tx_pe = 0;
+    //     transmittedAtPreviousCycle = false;
+    // }
+    // else
+    // {
+    //     if (!pebuffer.IsEmpty())
+    //     {
+    //         Flit flit = pebuffer.Front();
+    //         if ((current_level_tx_pe == ack_tx_pe.read()))
+    //         {
+    //             flit_tx_pe.write(flit);
+    //             current_level_tx_pe = 1 - current_level_tx_pe;
+    //             req_tx_pe.write(current_level_tx_pe);
+    //             pebuffer.Pop();
+    //         }
+    //     }
+    // }
+
+    if (reset.read())
+    {
+        req_tx_pe.write(0);
+        current_level_tx_pe = 0;
+        transmittedAtPreviousCycle = false;
+    }
+    else
+    {
+        if (ack_tx_pe.read() == current_level_tx_pe)
+        {
+            if (!pebuffer.IsEmpty())
+            {
+                Flit flit_tmp = pebuffer.Front(); // Generate a new flit
+                std::cout << " PE TXPE: => "
+                          << "Flit: " << flit_tmp.payload.data << endl;
+                flit_tx_pe->write(flit_tmp);                   // Send the generated flit
+                current_level_tx_pe = 1 - current_level_tx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
+                req_tx_pe.write(current_level_tx_pe);
+                pebuffer.Pop();
             }
         }
     }
@@ -84,7 +167,7 @@ Flit ProcessingElement::nextFlit()
     flit.sequence_no = packet.size - packet.flit_left;
     flit.sequence_length = packet.size;
     flit.hop_no = 0;
-    flit.payload.data = 5;
+    flit.payload.data = 5; // test
 
     if (packet.size == packet.flit_left)
         flit.flit_type = FLIT_TYPE_HEAD;

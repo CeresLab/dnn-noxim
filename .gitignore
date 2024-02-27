@@ -3,6 +3,7 @@ bin/build
 *.exe
 *.out
 *.txt
+*.vcd
 # libraries
 bin/libs
 bin/noxim
