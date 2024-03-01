@@ -83,17 +83,17 @@ void NoC::buildMesh()
 											  "default");
 
 			// Tell to the PE its coordinates
+			t[i][j]->ni->local_id = tile_id;
 			t[i][j]->pe->local_id = tile_id;
-			t[i][j]->cu->local_id = tile_id;
 
 			// Check for traffic table availability
 			if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
 			{
-				t[i][j]->pe->traffic_table = &gttable; // Needed to choose destination
-				t[i][j]->pe->never_transmit = (gttable.occurrencesAsSource(t[i][j]->pe->local_id) == 0);
+				t[i][j]->ni->traffic_table = &gttable; // Needed to choose destination
+				t[i][j]->ni->never_transmit = (gttable.occurrencesAsSource(t[i][j]->ni->local_id) == 0);
 			}
 			else
-				t[i][j]->pe->never_transmit = false;
+				t[i][j]->ni->never_transmit = false;
 
 			// Map clock and reset
 			t[i][j]->clock(clock);

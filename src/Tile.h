@@ -13,8 +13,8 @@
 
 #include <systemc.h>
 #include "Router.h"
+#include "NetworkInterface.h"
 #include "ProcessingElement.h"
-#include "ConvolutionUnit.h"
 
 using namespace std;
 
@@ -69,9 +69,9 @@ SC_MODULE(Tile)
 	sc_signal<TBufferFullStatus> buffer_full_status_tx_pe;
 
 	// Instances
-	Router *r;			   // Router instance
-	ProcessingElement *pe; // Processing Element instance
-	ConvolutionUnit *cu;
+	Router *r;			  // Router instance
+	NetworkInterface *ni; // Processing Element instance
+	ProcessingElement *pe;
 	// Constructor
 
 	Tile(sc_module_name nm, int id) : sc_module(nm)
@@ -114,48 +114,48 @@ SC_MODULE(Tile)
 		r->buffer_full_status_tx[DIRECTION_LOCAL](buffer_full_status_rx_local);
 
 		// Processing Element pin assignments
+		ni = new NetworkInterface("NetworkInterface");
+		ni->clock(clock);
+		ni->reset(reset);
+
+		ni->flit_rx(flit_rx_local);
+		ni->req_rx(req_rx_local);
+		ni->ack_rx(ack_rx_local);
+		ni->buffer_full_status_rx(buffer_full_status_rx_local);
+
+		ni->flit_tx(flit_tx_local);
+		ni->req_tx(req_tx_local);
+		ni->ack_tx(ack_tx_local);
+		ni->buffer_full_status_tx(buffer_full_status_tx_local);
+
+		ni->flit_rx_pe(flit_tx_pe);
+		ni->req_rx_pe(req_tx_pe);
+		ni->ack_rx_pe(ack_tx_pe);
+		ni->buffer_full_status_rx_pe(buffer_full_status_tx_pe);
+
+		ni->flit_tx_pe(flit_rx_pe);
+		ni->req_tx_pe(req_rx_pe);
+		ni->ack_tx_pe(ack_rx_pe);
+		ni->buffer_full_status_tx_pe(buffer_full_status_rx_pe);
+
 		pe = new ProcessingElement("ProcessingElement");
 		pe->clock(clock);
 		pe->reset(reset);
 
-		pe->flit_rx(flit_rx_local);
-		pe->req_rx(req_rx_local);
-		pe->ack_rx(ack_rx_local);
-		pe->buffer_full_status_rx(buffer_full_status_rx_local);
+		pe->flit_rx_pe(flit_rx_pe);
+		pe->req_rx_pe(req_rx_pe);
+		pe->ack_rx_pe(ack_rx_pe);
+		pe->buffer_full_status_rx_pe(buffer_full_status_rx_pe);
 
-		pe->flit_tx(flit_tx_local);
-		pe->req_tx(req_tx_local);
-		pe->ack_tx(ack_tx_local);
-		pe->buffer_full_status_tx(buffer_full_status_tx_local);
-
-		pe->flit_rx_pe(flit_tx_pe);
-		pe->req_rx_pe(req_tx_pe);
-		pe->ack_rx_pe(ack_tx_pe);
-		pe->buffer_full_status_rx_pe(buffer_full_status_tx_pe);
-
-		pe->flit_tx_pe(flit_rx_pe);
-		pe->req_tx_pe(req_rx_pe);
-		pe->ack_tx_pe(ack_rx_pe);
-		pe->buffer_full_status_tx_pe(buffer_full_status_rx_pe);
-
-		cu = new ConvolutionUnit("ConvolutionUnit");
-		cu->clock(clock);
-		cu->reset(reset);
-
-		cu->flit_rx_pe(flit_rx_pe);
-		cu->req_rx_pe(req_rx_pe);
-		cu->ack_rx_pe(ack_rx_pe);
-		cu->buffer_full_status_rx_pe(buffer_full_status_rx_pe);
-
-		cu->flit_tx_pe(flit_tx_pe);
-		cu->req_tx_pe(req_tx_pe);
-		cu->ack_tx_pe(ack_tx_pe);
-		cu->buffer_full_status_tx_pe(buffer_full_status_tx_pe);
+		pe->flit_tx_pe(flit_tx_pe);
+		pe->req_tx_pe(req_tx_pe);
+		pe->ack_tx_pe(ack_tx_pe);
+		pe->buffer_full_status_tx_pe(buffer_full_status_tx_pe);
 		// NoP
 		//
 		r->free_slots[DIRECTION_LOCAL](free_slots_local);
 		r->free_slots_neighbor[DIRECTION_LOCAL](free_slots_neighbor_local);
-		pe->free_slots_neighbor(free_slots_neighbor_local);
+		ni->free_slots_neighbor(free_slots_neighbor_local);
 	}
 };
 
