@@ -53,16 +53,34 @@ void NetworkInterface::txProcess()
     {
         Packet packet;
 
+        if (canShot(packet))
+        {
+            packet_queue.push(packet);
+            transmittedAtPreviousCycle = true;
+        }
+        else
+            transmittedAtPreviousCycle = false;
+
         if (ack_tx.read() == current_level_tx)
         {
-            if (!pebuffer.IsEmpty())
+            if (!packet_queue.empty())
             {
-                Flit flit = pebuffer.Front();            // Generate a new flit
+                Flit flit = nextFlit();                  // Generate a new flit
                 flit_tx->write(flit);                    // Send the generated flit
                 current_level_tx = 1 - current_level_tx; // Negate the old value for Alternating Bit Protocol (ABP)
                 req_tx.write(current_level_tx);
             }
         }
+        // if (ack_tx.read() == current_level_tx)
+        // {
+        //     if (!pebuffer.IsEmpty())
+        //     {
+        //         Flit flit = pebuffer.Front();            // Generate a new flit
+        //         flit_tx->write(flit);                    // Send the generated flit
+        //         current_level_tx = 1 - current_level_tx; // Negate the old value for Alternating Bit Protocol (ABP)
+        //         req_tx.write(current_level_tx);
+        //     }
+        // }
     }
 }
 
@@ -128,6 +146,7 @@ Flit NetworkInterface::nextFlit()
     flit.sequence_length = packet.size;
     flit.hop_no = 0;
     flit.payload.data = 5; // test
+    flit.data_type = 0;    // test
 
     if (packet.size == packet.flit_left)
         flit.flit_type = FLIT_TYPE_HEAD;

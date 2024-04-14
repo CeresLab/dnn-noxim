@@ -48,26 +48,60 @@ SC_MODULE(ProcessingElement)
     queue<Packet> packet_queue;      // Local queue of packets
     bool transmittedAtPreviousCycle; // Used for distributions with memory
 
+    /*===================================================================================*/
     int input_buffer_addr;
     int weight_buffer_addr;
+    int psum_buffer_addr;
+    int output_buffer_addr;
+    int flit_num;
+    int I_W;
+    int I_H;
+    int K_W;
+    int K_H;
+    int S;
+    int OP;
+    int O_H;
+    int O_W;
+    int O_M[8][8];
+    int WB_DST;
     State state;
-    float input_buffer[8 * 8];
-    float weight_buffer[8 * 8];
+    sc_uint<32> input_buffer[8 * 8];
+    sc_uint<32> weight_buffer[8 * 8];
+    sc_uint<32> psum_buffer[8 * 8];
+    sc_uint<32> output_buffer[8 * 8];
     int i;
+    /*===================================================================================*/
 
     // Functions
-    void rxProcess(); // The receiving process
-    void txProcess(); // The transmitting process
+    void process();
+    void rxProcess();      // The receiving process
+    void txProcess();      // The transmitting process
+    void computeProcess(); // The transmitting process
+
+    /*===================================================================================*/
+    void Convolution2D();
+    void FullyConnected();
+    void Pooling();
+    void DepthWise();
+    void PointWise();
+    void ReLU();
+    void Sigmoid();
+    /*===================================================================================*/
+
     Flit nextFlit();
 
     // Constructor
     SC_CTOR(ProcessingElement)
     {
-        SC_METHOD(rxProcess);
-        sensitive << reset;
-        sensitive << clock.pos();
+        // SC_METHOD(rxProcess);
+        // sensitive << reset;
+        // sensitive << clock.pos();
 
-        SC_METHOD(txProcess);
+        // SC_METHOD(txProcess);
+        // sensitive << reset;
+        // sensitive << clock.pos();
+
+        SC_METHOD(process);
         sensitive << reset;
         sensitive << clock.pos();
     }

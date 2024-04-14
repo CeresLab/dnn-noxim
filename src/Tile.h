@@ -151,6 +151,7 @@ SC_MODULE(Tile)
 		pe->req_tx_pe(req_tx_pe);
 		pe->ack_tx_pe(ack_tx_pe);
 		pe->buffer_full_status_tx_pe(buffer_full_status_tx_pe);
+
 		// NoP
 		//
 		r->free_slots[DIRECTION_LOCAL](free_slots_local);

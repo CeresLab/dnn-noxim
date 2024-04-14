@@ -25,21 +25,25 @@ bool GlobalTrafficTable::load(const char *fname)
 	traffic_table.clear();
 
 	// Cycle reading file
-	while (!fin.eof()) {
+	while (!fin.eof())
+	{
 		char line[512];
 		fin.getline(line, sizeof(line) - 1);
 
-		if (line[0] != '\0') {
-			if (line[0] != '%') {
-				int src, dst;	// Mandatory
+		if (line[0] != '\0')
+		{
+			if (line[0] != '%')
+			{
+				int src, dst; // Mandatory
 				double pir, por;
 				int t_on, t_off, t_period;
 				int count;
 
 				int params =
 					sscanf(line, "%d %d %d %lf %lf %d %d %d", &src, &dst, &count, &pir,
-						&por, &t_on, &t_off, &t_period);
-				if (params >= 2) {
+						   &por, &t_on, &t_off, &t_period);
+				if (params >= 2)
+				{
 					// Create a communication from the parameters read on the line
 					Communication communication;
 
@@ -47,44 +51,49 @@ bool GlobalTrafficTable::load(const char *fname)
 					communication.src = src;
 					communication.dst = dst;
 
-					if (params >= 3) communication.count = count;
+					if (params >= 3)
+						communication.count = count;
 
 					// Custom PIR
 					if (params >= 4 && pir >= 0 && pir <= 1)
-					communication.pir = pir;
+						communication.pir = pir;
 					else
-					communication.pir =
-						GlobalParams::packet_injection_rate;
+						communication.pir =
+							GlobalParams::packet_injection_rate;
 
 					// Custom POR
 					if (params >= 5 && por >= 0 && por <= 1)
-					communication.por = por;
+						communication.por = por;
 					else
-					communication.por = communication.pir;	// GlobalParams::probability_of_retransmission;
+						communication.por = communication.pir; // GlobalParams::probability_of_retransmission;
 
 					// Custom Ton
 					if (params >= 6 && t_on >= 0)
-					communication.t_on = t_on;
+						communication.t_on = t_on;
 					else
-					communication.t_on = 0;
+						communication.t_on = 0;
 
 					// Custom Toff
-					if (params >= 7 && t_off >= 0) {
-					assert(t_off > t_on);
-					communication.t_off = t_off;
-					} else
-					communication.t_off =
-						GlobalParams::reset_time +
-						GlobalParams::simulation_time;
+					if (params >= 7 && t_off >= 0)
+					{
+						assert(t_off > t_on);
+						communication.t_off = t_off;
+					}
+					else
+						communication.t_off =
+							GlobalParams::reset_time +
+							GlobalParams::simulation_time;
 
 					// Custom Tperiod
-					if (params >= 8 && t_period > 0) {
-					assert(t_period > t_off);
-					communication.t_period = t_period;
-					} else
-					communication.t_period =
-						GlobalParams::reset_time +
-						GlobalParams::simulation_time;
+					if (params >= 8 && t_period > 0)
+					{
+						assert(t_period > t_off);
+						communication.t_period = t_period;
+					}
+					else
+						communication.t_period =
+							GlobalParams::reset_time +
+							GlobalParams::simulation_time;
 
 					// Add this communication to the vector of communications
 					traffic_table.push_back(communication);
@@ -97,19 +106,22 @@ bool GlobalTrafficTable::load(const char *fname)
 }
 
 double GlobalTrafficTable::getCumulativePirPor(const int src_id,
-							const int ccycle,
-							const bool pir_not_por,
-							vector < pair < int, double > > &dst_prob)
+											   const int ccycle,
+											   const bool pir_not_por,
+											   vector<pair<int, double>> &dst_prob)
 {
 	double cpirnpor = 0.0;
 	dst_prob.clear();
-	for (unsigned int i = 0; i < traffic_table.size(); i++) {
+	for (unsigned int i = 0; i < traffic_table.size(); i++)
+	{
 		Communication comm = traffic_table[i];
-		if (comm.src == src_id) {
+		if (comm.src == src_id)
+		{
 			int r_ccycle = ccycle % comm.t_period;
-			if (r_ccycle > comm.t_on && r_ccycle < comm.t_off) {
+			if (r_ccycle > comm.t_on && r_ccycle < comm.t_off)
+			{
 				cpirnpor += pir_not_por ? comm.pir : comm.por;
-				pair < int, double >dp(comm.dst, cpirnpor);
+				pair<int, double> dp(comm.dst, cpirnpor);
 				dst_prob.push_back(dp);
 			}
 		}
@@ -118,18 +130,18 @@ double GlobalTrafficTable::getCumulativePirPor(const int src_id,
 	return cpirnpor;
 }
 
-// Get each communication packet counts - AddDate: 2023/04/02 
+// Get each communication packet counts - AddDate: 2023/04/02
 int GlobalTrafficTable::getPacketinCommunication(const int src_id, int &dst_id)
 {
-	for(unsigned int i = 0; i < traffic_table.size(); i++)
+	for (unsigned int i = 0; i < traffic_table.size(); i++)
 	{
-		// cout << "Taffic [ " << i+1 << " ]: Src=" << traffic_table[ i ].src << " Dst=" << traffic_table[ i ].dst << " Before--Count=" << traffic_table[ i ].count; 
-		if (traffic_table[ i ].src == src_id && traffic_table[ i ].count > 0)
+		// cout << "Taffic [ " << i+1 << " ]: Src=" << traffic_table[ i ].src << " Dst=" << traffic_table[ i ].dst << " Before--Count=" << traffic_table[ i ].count;
+		if (traffic_table[i].src == src_id && traffic_table[i].count > 0)
 		{
-			traffic_table[ i ].count = traffic_table[ i ].count - 1;
+			traffic_table[i].count = traffic_table[i].count - 1;
 			// cout << "->After--Count=" << traffic_table[ i ].count << endl;
-			dst_id = traffic_table[ i ].dst;
-			return traffic_table[ i ].count + 1;
+			dst_id = traffic_table[i].dst;
+			return traffic_table[i].count + 1;
 		}
 	}
 	return -1;
@@ -141,7 +153,7 @@ int GlobalTrafficTable::occurrencesAsSource(const int src_id)
 
 	for (unsigned int i = 0; i < traffic_table.size(); i++)
 		if (traffic_table[i].src == src_id)
-	count++;
+			count++;
 
 	return count;
 }

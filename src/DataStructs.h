@@ -40,14 +40,38 @@ enum DataType
 {
     INSTRUCTION,
     INPUT_DATA,
-    WEIGHT_DATA
+    WEIGHT_DATA,
+    OUTPUT_DATA
+};
+
+enum OperationType
+{
+    CONV2D,
+    FC,
+    DWCONV2D,
+    POOLING
+};
+
+enum ActivationType
+{
+    ReLu,
+    Sigmoid
+};
+
+struct ControlInfo
+{
+    int kernel_width;
+    int kernel_height;
+    int stride;
+    int input_width;
+    int input_height;
+    int wb_dst;
 };
 
 // Payload -- Payload definition
 struct Payload
 {
     sc_uint<32> data; // Bus for the data to be exchanged
-    DataType data_type;
     inline bool operator==(const Payload &payload) const
     {
         return (payload.data == data);
@@ -58,7 +82,8 @@ enum State
 {
     IDLE,
     LOAD,
-    BUSY
+    BUSY,
+    WB
 };
 
 // Packet -- Packet definition
@@ -163,6 +188,11 @@ struct Flit
     double timestamp; // Unix timestamp at packet generation
     int hop_no;       // Current number of hops from source to destination
     bool use_low_voltage_path;
+
+    int data_type;
+    ControlInfo ctrl_info;
+    int op_type;
+    int act_type;
 
     inline bool operator==(const Flit &flit) const
     {

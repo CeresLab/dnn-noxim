@@ -19,22 +19,23 @@
 using namespace std;
 
 // Structure used to store information into the table
-struct Communication {
-  int src;			  // ID of the source node (PE)
-  int dst;			  // ID of the destination node (PE)
-  double pir;			// Packet Injection Rate for the link
-  double por;			// Probability Of Retransmission for the link
-  int t_on;			  // Time (in cycles) at which activity begins
-  int t_off;			// Time (in cycles) at which activity ends
-  int t_period;   // Period after which activity starts again
+struct Communication
+{
+  int src;      // ID of the source node (PE)
+  int dst;      // ID of the destination node (PE)
+  double pir;   // Packet Injection Rate for the link
+  double por;   // Probability Of Retransmission for the link
+  int t_on;     // Time (in cycles) at which activity begins
+  int t_off;    // Time (in cycles) at which activity ends
+  int t_period; // Period after which activity starts again
 
-  int count;      // Packet count - AddDate: 2023/04/02
+  int count; // Packet count - AddDate: 2023/04/02
 };
 
-class GlobalTrafficTable {
+class GlobalTrafficTable
+{
 
-  public:
-
+public:
   GlobalTrafficTable();
 
   // Load traffic table from file. Returns true if ok, false otherwise
@@ -44,9 +45,9 @@ class GlobalTrafficTable {
   // first component of the pair is the destination. The second
   // component is the cumulative shotting probability.
   double getCumulativePirPor(const int src_id,
-  const int ccycle,
-  const bool pir_not_por,
-  vector < pair < int, double > > &dst_prob);
+                             const int ccycle,
+                             const bool pir_not_por,
+                             vector<pair<int, double>> &dst_prob);
 
   // Returns the number of occurrences of soruce src_id in the traffic
   // table
@@ -54,9 +55,8 @@ class GlobalTrafficTable {
 
   int getPacketinCommunication(const int src_id, int &dst_id);
 
-  private:
-
-    vector < Communication > traffic_table;
+private:
+  vector<Communication> traffic_table;
 };
 
 #endif
