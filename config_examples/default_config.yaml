@@ -161,8 +161,8 @@ probability_of_retransmission: 0.01
 #   TRAFFIC_BIT_REVERSAL
 #   TRAFFIC_SHUFFLE
 #   TRAFFIC_BUTTERFLY
-#   TRAFFIC_TABLE_BASED
-traffic_distribution: TRAFFIC_TABLE_BASED
+#   TRANSACTION_BASED
+traffic_distribution: TRANSACTION_BASED
 # when traffic table based is specified, use the following
 # configuration file
 traffic_table_filename: "tt.txt"

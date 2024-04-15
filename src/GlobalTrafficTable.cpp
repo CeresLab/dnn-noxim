@@ -157,3 +157,126 @@ int GlobalTrafficTable::occurrencesAsSource(const int src_id)
 
 	return count;
 }
+
+bool GlobalTrafficTable::loadTransaction(const char *fname)
+{
+	ifstream fin;
+	fin.open(fname);
+	if (!fin) return false;
+
+	transaction_table.clear();
+
+	/*
+	* Fetch transactions (8 lines per each)
+	*	'#': source and destination, STATE = 0
+	*	'?': operation type and activation type, STATE = 1
+	*	'!': control inforamtions, STATE = 2
+	*	'%': input feature map and weight data, STATE = 3
+	*/
+	int fetch_state = 0;
+	while (!fin.eof())
+	{
+		string line;
+		Transaction trans;
+		for (int i = 0; i < 8; i++)
+		{
+			getline(fin, line);
+
+			if (line[ 0 ] != '>' && fetch_state == 0)
+			{
+				int src_id, dst_id;
+				int params = 
+					sscanf(line.c_str(), "%d %d", &src_id, &dst_id);
+
+				assert(params == 2);
+
+				trans.src = src_id;
+				trans.dst = dst_id;
+			}
+			else if (line[ 0 ] != '>' && fetch_state == 1)
+			{
+				int opt, actt;
+				int params = 
+					sscanf(line.c_str(), "%d %d", &opt, &actt);
+
+				assert(params == 2);
+
+				trans.operation_type 	= opt;
+				trans.activation_type 	= actt;
+			}
+			else if (line[ 0 ] != '>' && fetch_state == 2)
+			{
+				int kw, kh, stride, ifw, ifh, wb_dst;
+				int params =
+					sscanf(line.c_str(), "%d %d %d %d %d %d", &kw, &kh, &stride,
+																&ifw, &ifh, &wb_dst);
+
+				assert(params == 6);
+
+				trans.ctrl_info.kernel_width 	= kw;
+				trans.ctrl_info.kernel_height 	= kh;
+				trans.ctrl_info.stride 			= stride;
+				trans.ctrl_info.input_width 	= ifw;
+				trans.ctrl_info.input_height 	= ifh;
+				trans.ctrl_info.wb_dst 			= wb_dst;
+			}
+			else if (line[ 0 ] != '>' && fetch_state == 3)
+			{
+				string tmp;
+				stringstream ss(line);
+				int ifm_data_cnt 	= trans.ctrl_info.input_width
+									* trans.ctrl_info.input_height;
+				int w_data_cnt 		= trans.ctrl_info.kernel_width
+									* trans.ctrl_info.kernel_height;
+				int format			= 0;
+
+				while (getline(ss, tmp, ' '))
+				{
+					if (ifm_data_cnt >= format)
+						trans.ifmap.push_back(stoi(tmp));
+					else
+						trans.weight.push_back(stoi(tmp));
+					format++;
+				}
+
+				assert(format == (ifm_data_cnt + w_data_cnt));
+			}
+			else 
+			{ 
+				if (line[ 1 ] == '#') fetch_state = 0;
+				if (line[ 1 ] == '?') fetch_state = 1;
+				if (line[ 1 ] == '!') fetch_state = 2;
+				if (line[ 1 ] == '%') fetch_state = 3;
+			}
+		}
+		trans.consumed_flag = 0;
+		transaction_table.push_back(trans);
+	}
+
+	return false;
+}
+
+int getTransactionInfo(const int src_id, int &dst_id, int &op, int &actt, 
+								ControlInfo &ctrl, vector< sc_uint<32> > &ifm, vector< sc_uint<32> > &w)
+{
+	for (unsigned int i = 0; i < transaction_table.size(); i++)
+	{
+		if (transaction_table[ i ].src == src_id && !consumed_flag)
+		{
+			dst_id 	= transaction_table[ i ].dst_id;
+			op		= transaction_table[ i ].operation_type;
+			actt	= transaction_table[ i ].activation_type;
+			ctrl 	= transaction_table[ i ].ctrl_info;
+			ifm 	= transaction_table[ i ].ifmap;
+			w		= transaction_table[ i ].weight;
+
+			consumed_flag = 1;
+			return 1;
+		}
+		else continue;
+	}
+
+	ifm.clear();
+	w.clear();
+	return -1;
+}

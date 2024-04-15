@@ -21,6 +21,10 @@ void NoC::buildCommon()
 	// Check for traffic table availability
 	if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
 		assert(gttable.load(GlobalParams::traffic_table_filename.c_str()));
+
+	//* Check for transaction table availability
+	if (GlobalParams::traffic_distribution == TRANSACTION_BASED)
+		assert(gttable.loadTransaction(GlobalParams::traffic_table_filename.c_str()));
 }
 
 void NoC::buildMesh()
