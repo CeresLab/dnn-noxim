@@ -77,6 +77,7 @@ SC_MODULE(NetworkInterface)
     // Packet trafficULocal();        // Random with locality
 
     GlobalTrafficTable *traffic_table; // Reference to the Global traffic Table
+    GlobalTrafficTable *transaction_table;  //* Reference to the Global transaction Table
     bool never_transmit;               // true if the PE does not transmit any packet
     //  (valid only for the table based traffic)
 
@@ -90,6 +91,22 @@ SC_MODULE(NetworkInterface)
     // int roulett();
     // int findRandomDestination(int local_id, int hops);
     unsigned int getQueueSize() const;
+
+    //* Load below informations from transaction table
+    int transaction_dst;
+    int transaction_opt;
+    int transaction_act;
+    ControlInfo transaction_ctrl;
+    vector< int >ifmap_data;
+    vector< int >weight_data;
+    int ifm_data_cnt, remain_ifm_size;
+    int w_data_cnt, remain_w_size;
+    //* Make packet in different state: INSTRUCTION, INPUT_DATA, WEIGHT_DATA
+    int makeP_state;
+    //* Make flit in different state (same above)
+    int makeF_state;
+    //* Keep transaction and produce the packet series
+    int remaining_traffic;
 
     // Constructor
     SC_CTOR(NetworkInterface)

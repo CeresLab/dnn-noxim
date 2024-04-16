@@ -42,7 +42,7 @@ void ProcessingElement::rxProcess()
             // else
             if (state == LOAD)
             {
-                if (flit_tmp.data_type == INSTRUCTION)
+                if (flit_tmp.data_type == INSTRUCTION && flit_tmp.flit_type != FLIT_TYPE_HEAD)
                 {
                     I_H = flit_tmp.ctrl_info.input_height;
                     I_W = flit_tmp.ctrl_info.input_width;
@@ -60,17 +60,19 @@ void ProcessingElement::rxProcess()
                     flit_num = 0;
                     cout << "Instruction" << endl;
                 }
-                else if (flit_tmp.data_type == INPUT_DATA)
+                else if (flit_tmp.data_type == INPUT_DATA && flit_tmp.flit_type != FLIT_TYPE_HEAD)
                 {
                     input_buffer[input_buffer_addr] = flit_tmp.payload.data;
                     input_buffer_addr++;
+                    cout << "INPUT_DATA" << endl;
                 }
-                else if (flit_tmp.data_type == WEIGHT_DATA)
+                else if (flit_tmp.data_type == WEIGHT_DATA && flit_tmp.flit_type != FLIT_TYPE_HEAD)
                 {
                     weight_buffer[weight_buffer_addr] = flit_tmp.payload.data;
                     weight_buffer_addr++;
+                    cout << "WEIGHT_DATA" << endl;
                 }
-                else if (flit_tmp.data_type == OUTPUT_DATA)
+                else if (flit_tmp.data_type == OUTPUT_DATA && flit_tmp.flit_type != FLIT_TYPE_HEAD)
                 {
                     cout << flit_tmp.payload.data << " ";
                 }
@@ -105,7 +107,7 @@ void ProcessingElement::rxProcess()
                         state = WB;
                 }
             }
-
+            //TODO: Update ABP current level at LOAD state only
             current_level_rx_pe = 1 - current_level_rx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
         }
 
@@ -236,6 +238,7 @@ Flit ProcessingElement::nextFlit()
 
 void ProcessingElement::Convolution2D()
 {
+    cout << "Convolution2D" <<endl;
     int I_M[I_H][I_W];
     int W_M[K_H][K_W];
 
@@ -257,7 +260,9 @@ void ProcessingElement::Convolution2D()
                     O_M[i][j] += I_M[i * S + m][j * S + n] * W_M[m][n];
                 }
             }
+            cout << "OM: " << O_M[i][j] << " ";
         }
+        cout << endl;
     }
 }
 

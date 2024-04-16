@@ -96,6 +96,12 @@ void NoC::buildMesh()
 				t[i][j]->ni->traffic_table = &gttable; // Needed to choose destination
 				t[i][j]->ni->never_transmit = (gttable.occurrencesAsSource(t[i][j]->ni->local_id) == 0);
 			}
+			//* Check for transaction table availability
+			else if (GlobalParams::traffic_distribution == TRANSACTION_BASED)
+			{
+				t[i][j]->ni->transaction_table = &gttable; // Needed to choose destination
+				t[i][j]->ni->never_transmit = 0;
+			}			
 			else
 				t[i][j]->ni->never_transmit = false;
 

@@ -232,7 +232,7 @@ bool GlobalTrafficTable::loadTransaction(const char *fname)
 
 				while (getline(ss, tmp, ' '))
 				{
-					if (ifm_data_cnt >= format)
+					if (ifm_data_cnt > format)
 						trans.ifmap.push_back(stoi(tmp));
 					else
 						trans.weight.push_back(stoi(tmp));
@@ -253,24 +253,29 @@ bool GlobalTrafficTable::loadTransaction(const char *fname)
 		transaction_table.push_back(trans);
 	}
 
-	return false;
+	for (unsigned int i = 0; i < transaction_table[0].ifmap.size(); i++)
+	{
+		cout << transaction_table[0].ifmap[i] << " ";
+	}
+	cout << endl;
+	return true;
 }
 
-int getTransactionInfo(const int src_id, int &dst_id, int &op, int &actt, 
-								ControlInfo &ctrl, vector< sc_uint<32> > &ifm, vector< sc_uint<32> > &w)
+int GlobalTrafficTable::getTransactionInfo(const int src_id, int &dst_id, int &op, int &actt, 
+								ControlInfo &ctrl, vector< int > &ifm, vector< int > &w)
 {
 	for (unsigned int i = 0; i < transaction_table.size(); i++)
 	{
-		if (transaction_table[ i ].src == src_id && !consumed_flag)
+		if (transaction_table[ i ].src == src_id && !transaction_table[ i ].consumed_flag)
 		{
-			dst_id 	= transaction_table[ i ].dst_id;
+			dst_id 	= transaction_table[ i ].dst;
 			op		= transaction_table[ i ].operation_type;
 			actt	= transaction_table[ i ].activation_type;
 			ctrl 	= transaction_table[ i ].ctrl_info;
 			ifm 	= transaction_table[ i ].ifmap;
 			w		= transaction_table[ i ].weight;
 
-			consumed_flag = 1;
+			transaction_table[ i ].consumed_flag = 1;
 			return 1;
 		}
 		else continue;
