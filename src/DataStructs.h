@@ -48,14 +48,12 @@ enum OperationType
 {
     CONV2D,
     FC,
-    DWCONV2D,
     POOLING
 };
 
 enum ActivationType
 {
-    ReLu,
-    Sigmoid
+    RELU
 };
 
 struct ControlInfo

@@ -53,13 +53,14 @@ SC_MODULE(ProcessingElement)
     int weight_buffer_addr;
     int psum_buffer_addr;
     int output_buffer_addr;
-    int flit_num;
+    int tranmitted_flit;
     int I_W;
     int I_H;
     int K_W;
     int K_H;
     int S;
     int OP;
+    int ACT;
     int O_H;
     int O_W;
     int O_M[8][8];
@@ -70,6 +71,8 @@ SC_MODULE(ProcessingElement)
     sc_uint<32> psum_buffer[8 * 8];
     sc_uint<32> output_buffer[8 * 8];
     int i;
+    int makeP_state;
+
     /*===================================================================================*/
 
     // Functions
@@ -84,8 +87,7 @@ SC_MODULE(ProcessingElement)
     void Pooling();
     void DepthWise();
     void PointWise();
-    void ReLU();
-    void Sigmoid();
+    int ReLU(int a);
     /*===================================================================================*/
 
     Flit nextFlit();

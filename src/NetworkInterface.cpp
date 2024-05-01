@@ -30,8 +30,8 @@ void NetworkInterface::rxProcess()
             if (!pebuffer.IsFull())
             {
                 Flit flit_tmp = flit_rx.read();
-                std::cout << " NI RX: => "
-                          << "Flit: " << flit_tmp.payload.data << endl;
+                // std::cout << " NI RX: => "
+                //           << "Flit: " << flit_tmp.payload.data << endl;
                 // std::cout << "Flit: " << flit_tmp.payload.data << endl;
                 pebuffer.Push(flit_tmp);
                 current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
@@ -78,17 +78,17 @@ void NetworkInterface::txProcess()
 
                 if (flit.flit_type == FLIT_TYPE_HEAD)
                 {
-                    cout << "\nHEAD: (" << flit.src_id << "->" << flit.dst_id << ")\n"; 
+                    cout << "\nHEAD: (" << flit.src_id << "->" << flit.dst_id << ")\n";
                 }
                 else if (flit.flit_type == FLIT_TYPE_BODY)
                 {
                     cout << "BODY: <" << flit.data_type << "> @"
-                        << flit.payload.data << "@\n";
+                         << flit.payload.data << "@\n";
                 }
                 else
                 {
                     cout << "TILE: <" << flit.data_type << "> @"
-                        << flit.payload.data << "@\n";
+                         << flit.payload.data << "@\n";
                 }
             }
         }
@@ -142,13 +142,16 @@ void NetworkInterface::txPeProcess()
         {
             if (!pebuffer.IsEmpty())
             {
-                Flit flit_tmp = pebuffer.Front(); // Generate a new flit
-                std::cout << " NI TXPE: => "
-                          << "Flit: " << flit_tmp.payload.data << endl;
-                flit_tx_pe->write(flit_tmp);                   // Send the generated flit
-                current_level_tx_pe = 1 - current_level_tx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
-                req_tx_pe.write(current_level_tx_pe);
-                pebuffer.Pop();
+                if (current_level_tx_pe == ack_tx_pe.read())
+                {
+                    Flit flit_tmp = pebuffer.Front(); // Generate a new flit
+                    // std::cout << " NI TXPE: => "
+                    //           << "Flit: " << flit_tmp.payload.data << endl;
+                    flit_tx_pe.write(flit_tmp);                    // Send the generated flit
+                    current_level_tx_pe = 1 - current_level_tx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
+                    req_tx_pe.write(current_level_tx_pe);
+                    pebuffer.Pop();
+                }
             }
         }
     }
@@ -169,28 +172,28 @@ Flit NetworkInterface::nextFlit()
 
     if (makeF_state == INSTRUCTION && packet.size != packet.flit_left)
     {
-        flit.ctrl_info      = transaction_ctrl;
-        flit.op_type        = transaction_opt;
-        flit.act_type       = transaction_act;
-        flit.payload.data   = 0;
-        flit.data_type      = INSTRUCTION;
-        makeF_state         = INPUT_DATA;
+        flit.ctrl_info = transaction_ctrl;
+        flit.op_type = transaction_opt;
+        flit.act_type = transaction_act;
+        flit.payload.data = 0;
+        flit.data_type = INSTRUCTION;
+        makeF_state = INPUT_DATA;
     }
     else if (makeF_state == INPUT_DATA && packet.size != packet.flit_left)
     {
-        flit.payload.data   = ifmap_data[ ifmap_data.size()-remain_ifm_size ];
-        remain_ifm_size    -= 1;
-        flit.data_type      = INPUT_DATA;
+        flit.payload.data = ifmap_data[ifmap_data.size() - remain_ifm_size];
+        remain_ifm_size -= 1;
+        flit.data_type = INPUT_DATA;
         if (remain_ifm_size == 0)
-            makeF_state     = WEIGHT_DATA;
+            makeF_state = WEIGHT_DATA;
     }
     else if (makeF_state == WEIGHT_DATA && packet.size != packet.flit_left)
     {
-        flit.payload.data   = weight_data[ weight_data.size()-remain_w_size ];
-        remain_w_size      -= 1;
-        flit.data_type      = WEIGHT_DATA;
+        flit.payload.data = weight_data[weight_data.size() - remain_w_size];
+        remain_w_size -= 1;
+        flit.data_type = WEIGHT_DATA;
         if (remain_w_size == 0)
-            makeF_state     = INSTRUCTION;      //TODO: Confirm WB state along with PE injected traffic
+            makeF_state = INSTRUCTION; // TODO: Confirm WB state along with PE injected traffic
     }
 
     if (packet.size == packet.flit_left)
@@ -225,10 +228,10 @@ bool NetworkInterface::canShot(Packet &packet)
     }
     */
 
-// #ifdef DEADLOCK_AVOIDANCE
-//     if (local_id % 2 == 0)
-//         return false;
-// #endif
+    // #ifdef DEADLOCK_AVOIDANCE
+    //     if (local_id % 2 == 0)
+    //         return false;
+    // #endif
 
     bool shot = false;
     // double threshold;
@@ -245,25 +248,25 @@ bool NetworkInterface::canShot(Packet &packet)
     //     shot = (((double)rand()) / RAND_MAX < threshold);
     //     if (shot)
     //     {
-            // if (GlobalParams::traffic_distribution == TRAFFIC_RANDOM)
-            //     packet = trafficRandom();
-            // else if (GlobalParams::traffic_distribution == TRAFFIC_TRANSPOSE1)
-            //     packet = trafficTranspose1();
-            // else if (GlobalParams::traffic_distribution == TRAFFIC_TRANSPOSE2)
-            //     packet = trafficTranspose2();
-            // else if (GlobalParams::traffic_distribution == TRAFFIC_BIT_REVERSAL)
-            //     packet = trafficBitReversal();
-            // else if (GlobalParams::traffic_distribution == TRAFFIC_SHUFFLE)
-            //     packet = trafficShuffle();
-            // else if (GlobalParams::traffic_distribution == TRAFFIC_BUTTERFLY)
-            //     packet = trafficButterfly();
-            // else if (GlobalParams::traffic_distribution == TRAFFIC_ULOCAL)
-            //     packet = trafficULocal();
-            // else
-            // {
-            //     cout << "Invalid traffic distribution: " << GlobalParams::traffic_distribution << endl;
-            //     exit(-1);
-            // }
+    // if (GlobalParams::traffic_distribution == TRAFFIC_RANDOM)
+    //     packet = trafficRandom();
+    // else if (GlobalParams::traffic_distribution == TRAFFIC_TRANSPOSE1)
+    //     packet = trafficTranspose1();
+    // else if (GlobalParams::traffic_distribution == TRAFFIC_TRANSPOSE2)
+    //     packet = trafficTranspose2();
+    // else if (GlobalParams::traffic_distribution == TRAFFIC_BIT_REVERSAL)
+    //     packet = trafficBitReversal();
+    // else if (GlobalParams::traffic_distribution == TRAFFIC_SHUFFLE)
+    //     packet = trafficShuffle();
+    // else if (GlobalParams::traffic_distribution == TRAFFIC_BUTTERFLY)
+    //     packet = trafficButterfly();
+    // else if (GlobalParams::traffic_distribution == TRAFFIC_ULOCAL)
+    //     packet = trafficULocal();
+    // else
+    // {
+    //     cout << "Invalid traffic distribution: " << GlobalParams::traffic_distribution << endl;
+    //     exit(-1);
+    // }
     //     }
     // }
 
@@ -307,25 +310,25 @@ bool NetworkInterface::canShot(Packet &packet)
     {
         if (never_transmit)
             return false;
-        
+
         //* Get the next transaction while finishing previous traffic
         if (ifm_data_cnt == 0 && w_data_cnt == 0 && remain_ifm_size == 0 && remain_w_size == 0)
         {
             remaining_traffic = transaction_table->getTransactionInfo(local_id, transaction_dst, transaction_opt,
-                                                                transaction_act, transaction_ctrl,
-                                                                ifmap_data, weight_data);
-            ifm_data_cnt    = ifmap_data.size();
+                                                                      transaction_act, transaction_ctrl,
+                                                                      ifmap_data, weight_data);
+            ifm_data_cnt = ifmap_data.size();
             remain_ifm_size = ifmap_data.size();
-            w_data_cnt      = weight_data.size();
-            remain_w_size   = weight_data.size();
+            w_data_cnt = weight_data.size();
+            remain_w_size = weight_data.size();
             // cout << "ifm cnt: " << ifm_data_cnt << " " << remain_ifm_size << endl;
         }
-        
+
         //* Make the packet in different state and size
         if (remaining_traffic > 0)
         {
-            int vc = randInt(0, GlobalParams::n_virtual_channels-1);
-            
+            int vc = randInt(0, GlobalParams::n_virtual_channels - 1);
+
             if (makeP_state == INSTRUCTION)
             {
                 packet.make(local_id, transaction_dst, vc, now, 2);
@@ -334,14 +337,14 @@ bool NetworkInterface::canShot(Packet &packet)
             }
             else if (makeP_state == INPUT_DATA)
             {
-                if (ifm_data_cnt-8 > 0)
+                if (ifm_data_cnt - 8 > 0)
                 {
-                    packet.make(local_id, transaction_dst, vc, now, 8+1);
+                    packet.make(local_id, transaction_dst, vc, now, 8 + 1);
                     ifm_data_cnt -= 8;
                 }
                 else
                 {
-                    packet.make(local_id, transaction_dst, vc, now, ifm_data_cnt+1);
+                    packet.make(local_id, transaction_dst, vc, now, ifm_data_cnt + 1);
                     ifm_data_cnt = 0;
                     makeP_state = WEIGHT_DATA;
                 }
@@ -349,24 +352,25 @@ bool NetworkInterface::canShot(Packet &packet)
             }
             else if (makeP_state == WEIGHT_DATA)
             {
-                if (w_data_cnt-8 > 0)
+                if (w_data_cnt - 8 > 0)
                 {
-                    packet.make(local_id, transaction_dst, vc, now, 8+1);
+                    packet.make(local_id, transaction_dst, vc, now, 8 + 1);
                     w_data_cnt -= 8;
                 }
                 else
                 {
-                    packet.make(local_id, transaction_dst, vc, now, w_data_cnt+1);
+                    packet.make(local_id, transaction_dst, vc, now, w_data_cnt + 1);
                     w_data_cnt = 0;
-                    makeP_state = INSTRUCTION;    //TODO: Confirm WB state along with PE injected traffic
+                    makeP_state = INSTRUCTION; // TODO: Confirm WB state along with PE injected traffic
                 }
                 // cout << "WEIGHT_DATA PP\n";
             }
             shot = true;
-            
-            if (ifm_data_cnt == 0 && w_data_cnt == 0) remaining_traffic = -1;
+
+            if (ifm_data_cnt == 0 && w_data_cnt == 0)
+                remaining_traffic = -1;
         }
-        else 
+        else
         {
             shot = false;
         }

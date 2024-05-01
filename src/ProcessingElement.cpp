@@ -23,25 +23,35 @@ void ProcessingElement::rxProcess()
     {
         ack_rx_pe.write(0);
         current_level_rx_pe = 0;
+
+        I_H = 0;
+        I_W = 0;
+        K_H = 0;
+        K_W = 0;
+        S = 0;
+        OP = -1;
+        O_H = 0;
+        O_W = 0;
+        WB_DST = -1;
         input_buffer_addr = 0;
+        weight_buffer_addr = 0;
         psum_buffer_addr = 0;
         output_buffer_addr = 0;
+        tranmitted_flit = 0;
         state = LOAD;
     }
     else
     {
-        if (req_rx_pe.read() == 1 - current_level_rx_pe)
+
+        // if (state == IDLE)
+        // {
+        // }
+        // else
+        if (state == LOAD)
         {
-            Flit flit_tmp = flit_rx_pe.read();
-            std::cout << " PE: => "
-                      << "Flit: " << flit_tmp.payload.data
-                      << " Local id : " << local_id << endl;
-            // if (state == IDLE)
-            // {
-            // }
-            // else
-            if (state == LOAD)
+            if (req_rx_pe.read() == 1 - current_level_rx_pe)
             {
+                Flit flit_tmp = flit_rx_pe.read();
                 if (flit_tmp.data_type == INSTRUCTION && flit_tmp.flit_type != FLIT_TYPE_HEAD)
                 {
                     I_H = flit_tmp.ctrl_info.input_height;
@@ -50,6 +60,7 @@ void ProcessingElement::rxProcess()
                     K_W = flit_tmp.ctrl_info.kernel_width;
                     S = flit_tmp.ctrl_info.stride;
                     OP = flit_tmp.op_type;
+                    ACT = flit_tmp.act_type;
                     O_H = (I_H - K_H) / S + 1;
                     O_W = (I_W - K_W) / S + 1;
                     WB_DST = flit_tmp.ctrl_info.wb_dst;
@@ -57,7 +68,7 @@ void ProcessingElement::rxProcess()
                     weight_buffer_addr = 0;
                     psum_buffer_addr = 0;
                     output_buffer_addr = 0;
-                    flit_num = 0;
+                    tranmitted_flit = 0;
                     cout << "Instruction" << endl;
                 }
                 else if (flit_tmp.data_type == INPUT_DATA && flit_tmp.flit_type != FLIT_TYPE_HEAD)
@@ -77,41 +88,29 @@ void ProcessingElement::rxProcess()
                     cout << flit_tmp.payload.data << " ";
                 }
 
-                if ((I_H * I_W == input_buffer_addr) && (K_W * K_H == weight_buffer_addr))
-                    state = BUSY;
-            }
-            else if (state == BUSY)
-            {
-                if (OP == CONV2D)
+                if (OP == CONV2D || OP == FC)
                 {
-                    Convolution2D();
-                    if (WB_DST < 0)
-                        state = LOAD;
-                    else
-                        state = WB;
-                }
-                else if (OP == FC)
-                {
-                    FullyConnected();
-                    if (WB_DST < 0)
-                        state = LOAD;
-                    else
-                        state = WB;
+                    if ((I_H * I_W == input_buffer_addr) && (K_W * K_H == weight_buffer_addr) && input_buffer_addr != 0 && weight_buffer_addr != 0)
+                        state = BUSY;
                 }
                 else if (OP == POOLING)
                 {
-                    FullyConnected();
-                    if (WB_DST < 0)
-                        state = LOAD;
-                    else
-                        state = WB;
+                    if ((I_H * I_W == input_buffer_addr) && input_buffer_addr != 0)
+                        state = BUSY;
                 }
-            }
-            //TODO: Update ABP current level at LOAD state only
-            current_level_rx_pe = 1 - current_level_rx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
-        }
 
-        ack_rx_pe.write(current_level_rx_pe);
+                // std::cout << " PE: => "
+                //           << "Flit: " << flit_tmp.payload.data
+                //           << " Local id : " << local_id << endl;
+                // TODO: Update ABP current level at LOAD state only
+                current_level_rx_pe = 1 - current_level_rx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
+                ack_rx_pe.write(current_level_rx_pe);
+            }
+        }
+        else if (state == BUSY)
+        {
+            computeProcess();
+        }
     }
 }
 
@@ -122,7 +121,9 @@ void ProcessingElement::txProcess()
         req_tx_pe.write(0);
         current_level_tx_pe = 0;
         transmittedAtPreviousCycle = false;
+
         i = 0;
+        makeP_state = 0;
     }
     else
     {
@@ -145,34 +146,55 @@ void ProcessingElement::txProcess()
 
         if (ack_tx_pe.read() == current_level_tx_pe)
         {
-            if (state == WB)
-            {
-                flit_num = O_W * O_H;
-                if (flit_num > 0)
-                {
-                    // Packet packet;
-                    // double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-                    // int packet_size;
-                    // if (flit_num / 8 != 0)
-                    //     packet_size = 8;
-                    // else
-                    //     packet_size = flit_num;
-                    // packet.make(local_id, WB_DST, 0, now, packet_size);
+            // if (state == WB)
+            // {
+            //     if (tranmitted_flit < O_W * O_H)
+            //     {
+            //         // Packet packet;
+            //         // double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+            //         // int packet_size;
+            //         // if (flit_num / 8 != 0)
+            //         //     packet_size = 8;
+            //         // else
+            //         //     packet_size = flit_num;
+            //         // packet.make(local_id, WB_DST, 0, now, packet_size);
 
-                    // for (int i = 0; i < packet_size; i++)
-                    //     packet.data.push_back(O_M[flit_num / O_H][flit_num % O_W]);
-                    Flit flit;
-                    flit.src_id = local_id;
-                    flit.dst_id = WB_DST;
-                    flit.payload.data = O_M[flit_num / O_H][flit_num % O_W]; // test
-                    flit_tx_pe->write(flit);                                 // Send the generated flit
-                    current_level_tx_pe = 1 - current_level_tx_pe;           // Negate the old value for Alternating Bit Protocol (ABP)
-                    req_tx_pe.write(current_level_tx_pe);
-                    flit_num++;
-                }
-                else
-                    state == LOAD;
-            }
+            //         // for (int i = 0; i < packet_size; i++)
+            //         //     packet.data.push_back(O_M[flit_num / O_H][flit_num % O_W]);
+            //         Flit flit;
+
+            //         if (makeP_state == 0)
+            //         {
+            //             flit.src_id = local_id;
+            //             flit.flit_type = FLIT_TYPE_HEAD;
+            //             flit.dst_id = WB_DST;
+            //             makeP_state = 1;
+            //         }
+            //         else if ((tranmitted_flit % 8 == 7 || tranmitted_flit == (O_W * O_H) - 1))
+            //         {
+            //             flit.flit_type = FLIT_TYPE_TAIL;
+            //             flit.payload.data = O_M[tranmitted_flit / O_H][tranmitted_flit % O_W];
+            //             tranmitted_flit++;
+            //             makeP_state = 0;
+            //         }
+            //         else
+            //         {
+            //             flit.flit_type = FLIT_TYPE_BODY;
+            //             flit.payload.data = O_M[tranmitted_flit / O_H][tranmitted_flit % O_W];
+            //             tranmitted_flit++;
+            //         }
+
+            //         // test
+            //         flit_tx_pe->write(flit);                       // Send the generated flit
+            //         current_level_tx_pe = 1 - current_level_tx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
+            //         req_tx_pe.write(current_level_tx_pe);
+            //     }
+            //     else
+            //     {
+            //         state = LOAD;
+            //         tranmitted_flit = 0;
+            //     }
+            // }
         }
     }
 }
@@ -181,30 +203,65 @@ void ProcessingElement::computeProcess()
 {
     if (state == BUSY)
     {
+        cout << " BUSY" << endl;
         if (OP == CONV2D)
         {
             Convolution2D();
             if (WB_DST < 0)
-                state = WB;
-            else
+            {
                 state = LOAD;
+                cout << "PE: " << local_id << " Convolution2D done!" << endl;
+                cout << "TO Load state !!!!" << endl;
+            }
+            else
+            {
+                state = WB;
+                cout << "TO Write back state !!!!" << endl;
+            }
         }
         else if (OP == FC)
         {
             FullyConnected();
             if (WB_DST < 0)
-                state = WB;
-            else
+            {
                 state = LOAD;
+                cout << "TO Load state !!!!" << endl;
+            }
+            else
+            {
+                state = WB;
+                cout << "TO Write back state !!!!" << endl;
+            }
         }
         else if (OP == POOLING)
         {
-            FullyConnected();
+            Pooling();
             if (WB_DST < 0)
-                state = WB;
-            else
+            {
                 state = LOAD;
+                cout << "TO Load state !!!!" << endl;
+            }
+            else
+            {
+                state = WB;
+                cout << "TO Write back state !!!!" << endl;
+            }
         }
+
+        I_H = 0;
+        I_W = 0;
+        K_H = 0;
+        K_W = 0;
+        S = 0;
+        OP = -1;
+        O_H = 0;
+        O_W = 0;
+        WB_DST = -1;
+        input_buffer_addr = 0;
+        weight_buffer_addr = 0;
+        psum_buffer_addr = 0;
+        output_buffer_addr = 0;
+        tranmitted_flit = 0;
     }
 }
 
@@ -220,7 +277,7 @@ Flit ProcessingElement::nextFlit()
     flit.sequence_no = packet.size - packet.flit_left;
     flit.sequence_length = packet.size;
     flit.hop_no = 0;
-    flit.payload.data = 5; // test
+    // flit.payload.data = 5; // test
 
     if (packet.size == packet.flit_left)
         flit.flit_type = FLIT_TYPE_HEAD;
@@ -238,7 +295,9 @@ Flit ProcessingElement::nextFlit()
 
 void ProcessingElement::Convolution2D()
 {
-    cout << "Convolution2D" <<endl;
+    cout << "============================" << endl;
+    cout << "|      Convolution2D       |" << endl;
+    cout << "============================" << endl;
     int I_M[I_H][I_W];
     int W_M[K_H][K_W];
 
@@ -260,14 +319,27 @@ void ProcessingElement::Convolution2D()
                     O_M[i][j] += I_M[i * S + m][j * S + n] * W_M[m][n];
                 }
             }
-            cout << "OM: " << O_M[i][j] << " ";
+            //*====================================
+            //*Activation fuction
+            if (ACT == RELU)
+            {
+                O_M[i][j] = ReLU(O_M[i][j]);
+                cout << "OM: " << O_M[i][j] << " ";
+            }
+            else
+                cout << "OM: " << O_M[i][j] << " ";
+            //*====================================
         }
         cout << endl;
     }
+    cout << "============================" << endl;
 }
 
 void ProcessingElement::FullyConnected()
 {
+    cout << "============================" << endl;
+    cout << "|      Fully-Connected     |" << endl;
+    cout << "============================" << endl;
     int I_M[I_H * I_W];
     int W_M[K_H * K_W];
 
@@ -281,23 +353,55 @@ void ProcessingElement::FullyConnected()
     {
         O_M[0][0] += I_M[k] * W_M[k];
     }
+    //*====================================
+    //*Activation fuction
+    if (ACT == RELU)
+    {
+        O_M[0][0] = ReLU(O_M[0][0]);
+        cout << "OM: " << O_M[0][0] << endl;
+    }
+    else
+        cout << "OM: " << O_M[0][0] << endl;
+    //*====================================
+
+    cout << "============================" << endl;
 }
 
 void ProcessingElement::Pooling()
 {
+    cout << "============================" << endl;
+    cout << "|          Pooling         |" << endl;
+    cout << "============================" << endl;
+    int I_M[I_H][I_W];
+
+    for (int i = 0; i < I_H; i++)
+        for (int j = 0; j < I_W; j++)
+            I_M[i][j] = input_buffer[i * I_H + j];
+
+    for (int i = 0; i < O_H; i++)
+    {
+        for (int j = 0; j < O_W; j++)
+        {
+            int MAX = -1;
+            for (int m = 0; m < K_H; m++)
+            {
+                for (int n = 0; n < K_W; n++)
+                {
+                    if (I_M[i * S + m][j * S + n] > MAX)
+                        MAX = I_M[i * S + m][j * S + n];
+                }
+            }
+            O_M[i][j] = MAX;
+            cout << "OM: " << O_M[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "============================" << endl;
 }
 
-// void ProcessingElement::DepthWise()
-// {
-// }
-// void ProcessingElement::PointWise()
-// {
-// }
-
-void ProcessingElement::ReLU()
+int ProcessingElement::ReLU(int a)
 {
-}
-
-void ProcessingElement::Sigmoid()
-{
+    int b;
+    b = (a > 0) ? a : 0;
+    return b;
 }
