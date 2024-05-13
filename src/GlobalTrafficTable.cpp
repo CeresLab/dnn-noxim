@@ -185,13 +185,15 @@ bool GlobalTrafficTable::loadTransaction(const char *fname)
 
 			if (line[0] != '>' && fetch_state == 0)
 			{
-				int src_id, dst_id;
+				int src_type, src_id, dst_id, dst_type;
 				int params =
-					sscanf(line.c_str(), "%d %d", &src_id, &dst_id);
+					sscanf(line.c_str(), "%d %d %d %d", &src_type, &src_id, &dst_type, &dst_id);
 
-				assert(params == 2);
+				assert(params == 4);
 
+				trans.src_type = src_type;
 				trans.src = src_id;
+				trans.dst_type = dst_type;
 				trans.dst = dst_id;
 			}
 			else if (line[0] != '>' && fetch_state == 1)
@@ -267,13 +269,14 @@ bool GlobalTrafficTable::loadTransaction(const char *fname)
 	return true;
 }
 
-int GlobalTrafficTable::getTransactionInfo(const int src_id, int &dst_id, int &op, int &actt,
+int GlobalTrafficTable::getTransactionInfo(const int src_type, const int src_id, int dst_type, int &dst_id, int &op, int &actt,
 										   ControlInfo &ctrl, vector<int> &ifm, vector<int> &w)
 {
 	for (unsigned int i = 0; i < transaction_table.size(); i++)
 	{
-		if (transaction_table[i].src == src_id && !transaction_table[i].consumed_flag)
+		if (transaction_table[i].src == src_id && transaction_table[i].src_type == src_type && !transaction_table[i].consumed_flag)
 		{
+			dst_type = transaction_table[i].dst_type;
 			dst_id = transaction_table[i].dst;
 			op = transaction_table[i].operation_type;
 			actt = transaction_table[i].activation_type;

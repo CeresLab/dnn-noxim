@@ -8,15 +8,15 @@
  * This file contains the implementation of the processing element
  */
 
-#include "NetworkInterface.h"
+#include "MemNetworkInterface.h"
 
-int NetworkInterface::randInt(int min, int max)
+int MemNetworkInterface::randInt(int min, int max)
 {
     return min +
            (int)((double)(max - min + 1) * rand() / (RAND_MAX + 1.0));
 }
 
-void NetworkInterface::rxProcess()
+void MemNetworkInterface::rxProcess()
 {
     if (reset.read())
     {
@@ -27,21 +27,21 @@ void NetworkInterface::rxProcess()
     {
         if (req_rx.read() == 1 - current_level_rx)
         {
-            if (!pebuffer.IsFull())
-            {
-                Flit flit_tmp = flit_rx.read();
-                // std::cout << " NI RX: => "
-                //           << "Flit: " << flit_tmp.payload.data << endl;
-                // std::cout << "Flit: " << flit_tmp.payload.data << endl;
-                pebuffer.Push(flit_tmp);
-                current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
-            }
+            // if (!pebuffer.IsFull())
+            // {
+            //     Flit flit_tmp = flit_rx.read();
+            //     // std::cout << " NI RX: => "
+            //     //           << "Flit: " << flit_tmp.payload.data << endl;
+            //     // std::cout << "Flit: " << flit_tmp.payload.data << endl;
+            //     pebuffer.Push(flit_tmp);
+            //     current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
+            // }
         }
         ack_rx.write(current_level_rx);
     }
 }
 
-void NetworkInterface::txProcess()
+void MemNetworkInterface::txProcess()
 {
     if (reset.read())
     {
@@ -105,59 +105,7 @@ void NetworkInterface::txProcess()
     }
 }
 
-void NetworkInterface::rxPeProcess()
-{
-    if (reset.read())
-    {
-        ack_rx_pe.write(0);
-        current_level_rx_pe = 0;
-    }
-    else
-    {
-        if (req_rx_pe.read() == 1 - current_level_rx_pe)
-        {
-            if (!pebuffer.IsFull())
-            {
-                Flit flit_tmp = flit_rx_pe.read();
-                // std::cout << "Flit: " << flit_tmp.payload.data << endl;
-                pebuffer.Push(flit_tmp);
-                current_level_rx_pe = 1 - current_level_rx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
-            }
-        }
-        ack_rx_pe.write(current_level_rx_pe);
-    }
-}
-
-void NetworkInterface::txPeProcess()
-{
-    if (reset.read())
-    {
-        req_tx_pe.write(0);
-        current_level_tx_pe = 0;
-        transmittedAtPreviousCycle = false;
-    }
-    else
-    {
-        if (ack_tx_pe.read() == current_level_tx_pe)
-        {
-            if (!pebuffer.IsEmpty())
-            {
-                if (current_level_tx_pe == ack_tx_pe.read())
-                {
-                    Flit flit_tmp = pebuffer.Front(); // Generate a new flit
-                    // std::cout << " NI TXPE: => "
-                    //           << "Flit: " << flit_tmp.payload.data << endl;
-                    flit_tx_pe.write(flit_tmp);                    // Send the generated flit
-                    current_level_tx_pe = 1 - current_level_tx_pe; // Negate the old value for Alternating Bit Protocol (ABP)
-                    req_tx_pe.write(current_level_tx_pe);
-                    pebuffer.Pop();
-                }
-            }
-        }
-    }
-}
-
-Flit NetworkInterface::nextFlit()
+Flit MemNetworkInterface::nextFlit()
 {
     Flit flit;
     Packet packet = packet_queue.front();
@@ -212,7 +160,7 @@ Flit NetworkInterface::nextFlit()
     return flit;
 }
 
-bool NetworkInterface::canShot(Packet &packet)
+bool MemNetworkInterface::canShot(Packet &packet)
 {
     // assert(false);
     if (never_transmit)
@@ -296,12 +244,12 @@ bool NetworkInterface::canShot(Packet &packet)
         // }
 
         int dstfromTable;
-        int remaining_traffic = traffic_table->getPacketinCommunication(local_id, dstfromTable);
+        int remaining_traffic = traffic_table->getPacketinCommunication(memory_id, dstfromTable);
         // cout << " / Remaining Traffic in PE: " << remaining_traffic << endl;
         if (remaining_traffic > 0)
         {
             int vc = randInt(0, GlobalParams::n_virtual_channels - 1);
-            packet.make(0, local_id, transaction_dst_type, dstfromTable, vc, now, getRandomSize());
+            packet.make(1, memory_id, transaction_dst_type, dstfromTable, vc, now, getRandomSize());
             shot = true;
         }
         else
@@ -316,7 +264,7 @@ bool NetworkInterface::canShot(Packet &packet)
         //* Get the next transaction while finishing previous traffic
         if (ifm_data_cnt == 0 && w_data_cnt == 0 && remain_ifm_size == 0 && remain_w_size == 0)
         {
-            remaining_traffic = transaction_table->getTransactionInfo(0, local_id, transaction_dst_type, transaction_dst, transaction_opt,
+            remaining_traffic = transaction_table->getTransactionInfo(1, memory_id, 0, transaction_dst, transaction_opt,
                                                                       transaction_act, transaction_ctrl,
                                                                       ifmap_data, weight_data);
             ifm_data_cnt = ifmap_data.size();
@@ -333,7 +281,7 @@ bool NetworkInterface::canShot(Packet &packet)
 
             if (makeP_state == INSTRUCTION)
             {
-                packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, 2);
+                packet.make(1, memory_id, 0, transaction_dst, vc, now, 2);
                 makeP_state = INPUT_DATA;
                 // cout << "INSTRUCTION PP\n";
             }
@@ -341,12 +289,12 @@ bool NetworkInterface::canShot(Packet &packet)
             {
                 if (ifm_data_cnt - 8 > 0)
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, 8 + 1);
+                    packet.make(1, memory_id, 0, transaction_dst, vc, now, 8 + 1);
                     ifm_data_cnt -= 8;
                 }
                 else
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, ifm_data_cnt + 1);
+                    packet.make(1, memory_id, 0, transaction_dst, vc, now, ifm_data_cnt + 1);
                     ifm_data_cnt = 0;
                     makeP_state = WEIGHT_DATA;
                 }
@@ -356,12 +304,12 @@ bool NetworkInterface::canShot(Packet &packet)
             {
                 if (w_data_cnt - 8 > 0)
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, 8 + 1);
+                    packet.make(1, memory_id, 0, transaction_dst, vc, now, 8 + 1);
                     w_data_cnt -= 8;
                 }
                 else
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, w_data_cnt + 1);
+                    packet.make(1, memory_id, 0, transaction_dst, vc, now, w_data_cnt + 1);
                     w_data_cnt = 0;
                     makeP_state = INSTRUCTION; // TODO: Confirm WB state along with PE injected traffic
                 }
@@ -381,7 +329,7 @@ bool NetworkInterface::canShot(Packet &packet)
     return shot;
 }
 
-// int NetworkInterface::findRandomDestination(int id, int hops)
+// int MemNetworkInterface::findRandomDestination(int id, int hops)
 // {
 //     assert(GlobalParams::topology == TOPOLOGY_MESH);
 
@@ -434,7 +382,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return 1;
 // }
 
-// Packet NetworkInterface::trafficULocal()
+// Packet MemNetworkInterface::trafficULocal()
 // {
 //     Packet p;
 //     p.src_id = local_id;
@@ -450,7 +398,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 
-// Packet NetworkInterface::trafficRandom()
+// Packet MemNetworkInterface::trafficRandom()
 // {
 //     Packet p;
 //     p.src_id = local_id;
@@ -500,7 +448,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 // // TODO: for testing only
-// Packet NetworkInterface::trafficTest()
+// Packet MemNetworkInterface::trafficTest()
 // {
 //     Packet p;
 //     p.src_id = local_id;
@@ -513,7 +461,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 
-// Packet NetworkInterface::trafficTranspose1()
+// Packet MemNetworkInterface::trafficTranspose1()
 // {
 //     assert(GlobalParams::topology == TOPOLOGY_MESH);
 //     Packet p;
@@ -535,7 +483,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 
-// Packet NetworkInterface::trafficTranspose2()
+// Packet MemNetworkInterface::trafficTranspose2()
 // {
 //     assert(GlobalParams::topology == TOPOLOGY_MESH);
 //     Packet p;
@@ -557,7 +505,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 
-// void NetworkInterface::setBit(int &x, int w, int v)
+// void MemNetworkInterface::setBit(int &x, int w, int v)
 // {
 //     int mask = 1 << w;
 
@@ -569,17 +517,17 @@ bool NetworkInterface::canShot(Packet &packet)
 //         assert(false);
 // }
 
-// int NetworkInterface::getBit(int x, int w)
+// int MemNetworkInterface::getBit(int x, int w)
 // {
 //     return (x >> w) & 1;
 // }
 
-// inline double NetworkInterface::log2ceil(double x)
+// inline double MemNetworkInterface::log2ceil(double x)
 // {
 //     return ceil(log(x) / log(2.0));
 // }
 
-// Packet NetworkInterface::trafficBitReversal()
+// Packet MemNetworkInterface::trafficBitReversal()
 // {
 
 //     int nbits =
@@ -601,7 +549,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 
-// Packet NetworkInterface::trafficShuffle()
+// Packet MemNetworkInterface::trafficShuffle()
 // {
 
 //     int nbits =
@@ -624,7 +572,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 
-// Packet NetworkInterface::trafficButterfly()
+// Packet MemNetworkInterface::trafficButterfly()
 // {
 
 //     int nbits = (int)log2ceil((double)(GlobalParams::mesh_dim_x *
@@ -646,7 +594,7 @@ bool NetworkInterface::canShot(Packet &packet)
 //     return p;
 // }
 
-// void NetworkInterface::fixRanges(const Coord src,
+// void MemNetworkInterface::fixRanges(const Coord src,
 //                                   Coord &dst)
 // {
 //     // Fix ranges
@@ -660,13 +608,13 @@ bool NetworkInterface::canShot(Packet &packet)
 //         dst.y = GlobalParams::mesh_dim_y - 1;
 // }
 
-int NetworkInterface::getRandomSize()
+int MemNetworkInterface::getRandomSize()
 {
     return randInt(GlobalParams::min_packet_size,
                    GlobalParams::max_packet_size);
 }
 
-unsigned int NetworkInterface::getQueueSize() const
+unsigned int MemNetworkInterface::getQueueSize() const
 {
     return packet_queue.size();
 }

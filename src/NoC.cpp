@@ -60,6 +60,8 @@ void NoC::buildMesh()
 		t[i] = new Tile *[GlobalParams::mesh_dim_y];
 	}
 
+	mt = new MemTile *[GlobalParams::mesh_dim_y];
+
 	// Create the mesh as a matrix of tiles
 	for (int j = 0; j < GlobalParams::mesh_dim_y; j++)
 	{
@@ -71,7 +73,7 @@ void NoC::buildMesh()
 			tile_coord.x = i;
 			tile_coord.y = j;
 			int tile_id = coord2Id(tile_coord);
-			cout << "ID: " << tile_id << endl;
+			cout << "PE ID: " << tile_id << endl;
 			sprintf(tile_name, "Tile[%02d][%02d]_(#%d)", i, j, tile_id);
 			t[i][j] = new Tile(tile_name, tile_id);
 
@@ -101,7 +103,7 @@ void NoC::buildMesh()
 			{
 				t[i][j]->ni->transaction_table = &gttable; // Needed to choose destination
 				t[i][j]->ni->never_transmit = 0;
-			}			
+			}
 			else
 				t[i][j]->ni->never_transmit = false;
 
@@ -175,6 +177,66 @@ void NoC::buildMesh()
 		}
 	}
 
+	//
+	for (int j = 0; j < GlobalParams::mesh_dim_y; j++)
+	{
+		// Create the single Tile with a proper name
+		char mem_tile_name[64];
+		// Coord tile_coord;
+		// tile_coord.y = j;
+		// int tile_id = coord2Id(tile_coord);
+		cout << "Memory ID: " << j << endl;
+		sprintf(mem_tile_name, "MemTile[%02d][%02d]_(#%d)", GlobalParams::mesh_dim_x - 1, j, j);
+		mt[j] = new MemTile(mem_tile_name, j);
+
+		// Tell to the router its coordinates
+
+		// Tell to the PE its coordinates
+		mt[j]->memni->memory_id = j;
+
+		// Check for traffic table availability
+		if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+		{
+			mt[j]->memni->traffic_table = &gttable; // Needed to choose destination
+			mt[j]->memni->never_transmit = (gttable.occurrencesAsSource(mt[j]->memni->memory_id) == 0);
+		}
+		//* Check for transaction table availability
+		else if (GlobalParams::traffic_distribution == TRANSACTION_BASED)
+		{
+			mt[j]->memni->transaction_table = &gttable; // Needed to choose destination
+			mt[j]->memni->never_transmit = 0;
+		}
+		else
+			mt[j]->memni->never_transmit = false;
+
+		// Map clock and reset
+		mt[j]->clock(clock);
+		mt[j]->reset(reset);
+
+		// Map Rx signals
+		mt[j]->req_rx(req[GlobalParams::mesh_dim_x][j].east);
+		mt[j]->flit_rx(flit[GlobalParams::mesh_dim_x][j].east);
+		mt[j]->ack_rx(ack[GlobalParams::mesh_dim_x][j].west);
+		mt[j]->buffer_full_status_rx(buffer_full_status[GlobalParams::mesh_dim_x][j].west);
+
+		// Map Tx signals
+
+		mt[j]->req_tx(req[GlobalParams::mesh_dim_x][j].west);
+		mt[j]->flit_tx(flit[GlobalParams::mesh_dim_x][j].west);
+		mt[j]->ack_tx(ack[GlobalParams::mesh_dim_x][j].east);
+		mt[j]->buffer_full_status_tx(buffer_full_status[GlobalParams::mesh_dim_x][j].east);
+
+		// Map buffer level signals (analogy with req_tx/rx port mapping)
+		// mt[j]->free_slots(free_slots[GlobalParams::mesh_dim_x][j].west);
+
+		mt[j]->free_slots_neighbor(free_slots[GlobalParams::mesh_dim_x][j].east);
+
+		// NoP
+		// mt[j]->NoP_data_out(nop_data[GlobalParams::mesh_dim_x][j].west);
+
+		// mt[j]->NoP_data_in(nop_data[GlobalParams::mesh_dim_x + 1][j].west);
+	}
+
 	// dummy NoP_data structure
 	NoP_data tmp_NoP;
 
@@ -202,18 +264,19 @@ void NoC::buildMesh()
 		nop_data[i][GlobalParams::mesh_dim_y].north.write(tmp_NoP);
 	}
 
+	//* Open signals for borderline nodes of X dimension to connect with Memory Tile
 	for (int j = 0; j <= GlobalParams::mesh_dim_y; j++)
 	{
 		req[0][j].east = 0;
 		ack[0][j].west = 0;
-		req[GlobalParams::mesh_dim_x][j].west = 0;
-		ack[GlobalParams::mesh_dim_x][j].east = 0;
+		// req[GlobalParams::mesh_dim_x][j].west = 0;
+		// ack[GlobalParams::mesh_dim_x][j].east = 0;
 
 		free_slots[0][j].east.write(NOT_VALID);
-		free_slots[GlobalParams::mesh_dim_x][j].west.write(NOT_VALID);
+		// free_slots[GlobalParams::mesh_dim_x][j].west.write(NOT_VALID);
 
 		nop_data[0][j].east.write(tmp_NoP);
-		nop_data[GlobalParams::mesh_dim_x][j].west.write(tmp_NoP);
+		// nop_data[GlobalParams::mesh_dim_x][j].west.write(tmp_NoP);
 	}
 }
 

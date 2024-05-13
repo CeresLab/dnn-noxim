@@ -87,7 +87,9 @@ enum State
 // Packet -- Packet definition
 struct Packet
 {
+    int src_type;
     int src_id;
+    int dst_type;
     int dst_id;
     int vc_id;
     double timestamp; // SC timestamp at packet generation
@@ -98,14 +100,16 @@ struct Packet
     // Constructors
     Packet() {}
 
-    Packet(const int s, const int d, const int vc, const double ts, const int sz)
+    Packet(const int st, const int s, const int dt, const int d, const int vc, const double ts, const int sz)
     {
-        make(s, d, vc, ts, sz);
+        make(st, s, dt, d, vc, ts, sz);
     }
 
-    void make(const int s, const int d, const int vc, const double ts, const int sz)
+    void make(const int st, const int s, const int dt, const int d, const int vc, const double ts, const int sz)
     {
+        src_type = st;
         src_id = s;
+        dst_type = dt;
         dst_id = d;
         vc_id = vc;
         timestamp = ts;
@@ -119,7 +123,9 @@ struct Packet
 struct RouteData
 {
     int current_id;
+    int src_type;
     int src_id;
+    int dst_type;
     int dst_id;
     int dir_in; // direction from which the packet comes from
     int vc_id;
@@ -176,7 +182,9 @@ struct TBufferFullStatus
 // Flit -- Flit definition
 struct Flit
 {
+    int src_type;
     int src_id;
+    int dst_type;
     int dst_id;
     int vc_id;          // Virtual Channel
     FlitType flit_type; // The flit type (FLIT_TYPE_HEAD, FLIT_TYPE_BODY, FLIT_TYPE_TAIL)
@@ -194,7 +202,7 @@ struct Flit
 
     inline bool operator==(const Flit &flit) const
     {
-        return (flit.src_id == src_id && flit.dst_id == dst_id && flit.flit_type == flit_type && flit.vc_id == vc_id && flit.sequence_no == sequence_no && flit.sequence_length == sequence_length && flit.payload == payload && flit.timestamp == timestamp && flit.hop_no == hop_no && flit.use_low_voltage_path == use_low_voltage_path);
+        return (flit.src_type == src_type && flit.src_id == src_id && flit.dst_type == dst_type && flit.dst_id == dst_id && flit.flit_type == flit_type && flit.vc_id == vc_id && flit.sequence_no == sequence_no && flit.sequence_length == sequence_length && flit.payload == payload && flit.timestamp == timestamp && flit.hop_no == hop_no && flit.use_low_voltage_path == use_low_voltage_path);
     }
 };
 

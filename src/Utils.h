@@ -98,7 +98,40 @@ inline ostream &operator<<(ostream &os, const Flit &flit)
             break;
         }
 
-        os << flit.sequence_no << ", " << flit.src_id << "->" << flit.dst_id << " VC " << flit.vc_id << ")";
+        // os << flit.sequence_no << ", " << flit.src_id << "->" << flit.dst_id << " VC " << flit.vc_id << ")";
+        os << flit.sequence_no << ", ";
+        switch (flit.src_type)
+        {
+        case 0:
+            os << "P"; // PE
+            break;
+        case 1:
+            os << "M"; // MEMORY
+            break;
+        }
+
+        os << flit.src_id << "->";
+
+        // switch (flit.dst_type)
+        // {
+        // case 0:
+        //     os << "P"; // PE
+        //     break;
+        // case 1:
+        //     os << "M"; // MEMORY
+        //     break;
+        // }
+        switch (flit.dst_type)
+        {
+        case 0:
+            os << "P"; // PE
+            break;
+        case 1:
+            os << "M"; // MEMORY
+            break;
+        }
+
+        os << flit.dst_id << " VC " << flit.vc_id << ")";
     }
 
     return os;

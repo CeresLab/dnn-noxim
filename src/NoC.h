@@ -13,6 +13,7 @@
 
 #include <systemc.h>
 #include "Tile.h"
+#include "MemTile.h"
 #include "GlobalRoutingTable.h"
 #include "GlobalTrafficTable.h"
 using namespace std;
@@ -28,10 +29,11 @@ struct sc_signal_NSWE
 
 SC_MODULE(NoC)
 {
-    public: bool SwitchOnly; //true if the tile are switch only 
+public:
+    bool SwitchOnly; // true if the tile are switch only
     // I/O Ports
-    sc_in_clk clock;		// The input clock for the NoC
-    sc_in < bool > reset;	// The reset signal for the NoC
+    sc_in_clk clock;   // The input clock for the NoC
+    sc_in<bool> reset; // The reset signal for the NoC
 
     // Signals mesh and switch bloc in delta topologies
     sc_signal_NSWE<bool> **req;
@@ -45,42 +47,40 @@ SC_MODULE(NoC)
 
     // Matrix of tiles
     Tile ***t;
-    Tile ** core;
+    MemTile **mt;
+    Tile **core;
 
     // Global tables
     GlobalRoutingTable grtable;
     GlobalTrafficTable gttable;
 
-
     // Constructor
 
-    SC_CTOR(NoC) 
+    SC_CTOR(NoC)
     {
 
+        if (GlobalParams::topology == TOPOLOGY_MESH)
+            // Build the Mesh
+            buildMesh();
+        else
+        {
+            cerr << "ERROR: Topology " << GlobalParams::topology << " is not yet supported." << endl;
+            exit(0);
+        }
+        // out of yaml configuration (experimental features)
+        // GlobalParams::channel_selection = CHSEL_FIRST_FREE;
 
-	if (GlobalParams::topology == TOPOLOGY_MESH)
-	    // Build the Mesh
-	    buildMesh();
-	else {
-	    cerr << "ERROR: Topology " << GlobalParams::topology << " is not yet supported." << endl;
-	    exit(0);
-    }
-	// out of yaml configuration (experimental features)
-	//GlobalParams::channel_selection = CHSEL_FIRST_FREE;
-
-	if (GlobalParams::ascii_monitor)
-	{
-	    SC_METHOD(asciiMonitor);
-	    sensitive << clock.pos();
-	}
-
+        if (GlobalParams::ascii_monitor)
+        {
+            SC_METHOD(asciiMonitor);
+            sensitive << clock.pos();
+        }
     }
 
     // Support methods
     Tile *searchNode(const int id) const;
 
-  private:
-
+private:
     void buildMesh();
     void buildCommon();
     void asciiMonitor();

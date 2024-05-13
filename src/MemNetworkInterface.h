@@ -8,8 +8,8 @@
  * This file contains the declaration of the processing element
  */
 
-#ifndef __NOXIMNETWORKINTERFACE_H__
-#define __NOXIMNETWORKINTERFACE_H__
+#ifndef __NOXIMMEMNETWORKINTERFACE_H__
+#define __NOXIMMEMNETWORKINTERFACE_H__
 
 #include <queue>
 #include <systemc.h>
@@ -21,7 +21,7 @@
 
 using namespace std;
 
-SC_MODULE(NetworkInterface)
+SC_MODULE(MemNetworkInterface)
 {
 
     // I/O Ports
@@ -38,33 +38,18 @@ SC_MODULE(NetworkInterface)
     sc_in<bool> ack_tx;   // The outgoing ack signal associated with the output channel
     sc_in<TBufferFullStatus> buffer_full_status_tx;
 
-    sc_in<Flit> flit_rx_pe; // The input channel
-    sc_in<bool> req_rx_pe;  // The request associated with the input channel
-    sc_out<bool> ack_rx_pe; // The outgoing ack signal associated with the input channel
-    sc_out<TBufferFullStatus> buffer_full_status_rx_pe;
-
-    sc_out<Flit> flit_tx_pe; // The output channel
-    sc_out<bool> req_tx_pe;  // The request associated with the output channel
-    sc_in<bool> ack_tx_pe;   // The outgoing ack signal associated with the output channel
-    sc_in<TBufferFullStatus> buffer_full_status_tx_pe;
-
     sc_in<int> free_slots_neighbor;
 
     // Registers
-    int local_id;                    // Unique identification number
+    int memory_id;                   // Unique identification number
     bool current_level_rx;           // Current level for Alternating Bit Protocol (ABP)
     bool current_level_tx;           // Current level for Alternating Bit Protocol (ABP)
-    bool current_level_rx_pe;        // Current level for Alternating Bit Protocol (ABP)
-    bool current_level_tx_pe;        // Current level for Alternating Bit Protocol (ABP)
-    PeBufferBank pebuffer;           // buffer[direction][virtual_channel]
     queue<Packet> packet_queue;      // Local queue of packets
     bool transmittedAtPreviousCycle; // Used for distributions with memory
 
     // Functions
     void rxProcess();              // The receiving process from local port of Router
     void txProcess();              // The transmitting process from local port of Router
-    void rxPeProcess();            // The receiving process from PE
-    void txPeProcess();            // The transmitting process from PE
     bool canShot(Packet & packet); // True when the packet must be shot
     Flit nextFlit();               // Take the next flit of the current packet
     // Packet trafficTest();          // used for testing traffic
@@ -110,21 +95,13 @@ SC_MODULE(NetworkInterface)
     int remaining_traffic;
 
     // Constructor
-    SC_CTOR(NetworkInterface)
+    SC_CTOR(MemNetworkInterface)
     {
         SC_METHOD(rxProcess);
         sensitive << reset;
         sensitive << clock.pos();
 
         SC_METHOD(txProcess);
-        sensitive << reset;
-        sensitive << clock.pos();
-
-        SC_METHOD(rxPeProcess);
-        sensitive << reset;
-        sensitive << clock.pos();
-
-        SC_METHOD(txPeProcess);
         sensitive << reset;
         sensitive << clock.pos();
     }
