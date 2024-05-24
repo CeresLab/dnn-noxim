@@ -63,6 +63,8 @@ struct ControlInfo
     int stride;
     int input_width;
     int input_height;
+    int output_width;
+    int output_height;
     int wb_dst;
 };
 

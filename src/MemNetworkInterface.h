@@ -18,6 +18,7 @@
 #include "Buffer.h"
 #include "GlobalTrafficTable.h"
 #include "Utils.h"
+#include "Stats.h"
 
 using namespace std;
 
@@ -46,6 +47,7 @@ SC_MODULE(MemNetworkInterface)
     bool current_level_tx;           // Current level for Alternating Bit Protocol (ABP)
     queue<Packet> packet_queue;      // Local queue of packets
     bool transmittedAtPreviousCycle; // Used for distributions with memory
+    int receivedPackets;
 
     // Functions
     void rxProcess();              // The receiving process from local port of Router
@@ -64,6 +66,7 @@ SC_MODULE(MemNetworkInterface)
     GlobalTrafficTable *traffic_table;     // Reference to the Global traffic Table
     GlobalTrafficTable *transaction_table; //* Reference to the Global transaction Table
     bool never_transmit;                   // true if the PE does not transmit any packet
+    Stats stats;                           // Statistics
     //  (valid only for the table based traffic)
 
     // void fixRanges(const Coord, Coord &); // Fix the ranges of the destination
@@ -87,6 +90,7 @@ SC_MODULE(MemNetworkInterface)
     vector<int> weight_data;
     int ifm_data_cnt, remain_ifm_size;
     int w_data_cnt, remain_w_size;
+    int ofm_cnt;
     //* Make packet in different state: INSTRUCTION, INPUT_DATA, WEIGHT_DATA
     int makeP_state;
     //* Make flit in different state (same above)

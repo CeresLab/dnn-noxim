@@ -103,9 +103,13 @@ void NoC::buildMesh()
 			{
 				t[i][j]->ni->transaction_table = &gttable; // Needed to choose destination
 				t[i][j]->ni->never_transmit = 0;
+				t[i][j]->pe->transaction_table = &gttable; // Needed to choose destination
 			}
 			else
 				t[i][j]->ni->never_transmit = false;
+
+			//* initial empty vector to pe_transaction_table
+			gttable.initPETransaction();
 
 			// Map clock and reset
 			t[i][j]->clock(clock);
@@ -186,7 +190,7 @@ void NoC::buildMesh()
 		// tile_coord.y = j;
 		// int tile_id = coord2Id(tile_coord);
 		cout << "Memory ID: " << j << endl;
-		sprintf(mem_tile_name, "MemTile[%02d][%02d]_(#%d)", GlobalParams::mesh_dim_x - 1, j, j);
+		sprintf(mem_tile_name, "MemTile[%02d][%02d]_(#%d)", GlobalParams::mesh_dim_x, j, j);
 		mt[j] = new MemTile(mem_tile_name, j);
 
 		// Tell to the router its coordinates

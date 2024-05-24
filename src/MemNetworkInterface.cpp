@@ -22,24 +22,61 @@ void MemNetworkInterface::rxProcess()
     {
         ack_rx.write(0);
         current_level_rx = 0;
+        ofm_cnt = 0;
+        receivedPackets = 0;
     }
     else
     {
         if (req_rx.read() == 1 - current_level_rx)
         {
-            // if (!pebuffer.IsFull())
-            // {
-            //     Flit flit_tmp = flit_rx.read();
-            //     // std::cout << " NI RX: => "
-            //     //           << "Flit: " << flit_tmp.payload.data << endl;
-            //     // std::cout << "Flit: " << flit_tmp.payload.data << endl;
-            //     pebuffer.Push(flit_tmp);
-            //     current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
-            // }
+            Flit flit_tmp = flit_rx.read();
+            current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
+            if (flit_tmp.data_type == INSTRUCTION && flit_tmp.flit_type != FLIT_TYPE_HEAD)
+            {
+                cout << " ------------------------------------------------------------------ " << endl;
+                cout << " Memory: " << memory_id << endl;
+                cout << " Src_type: " << flit_tmp.src_type << " Src_id: " << flit_tmp.src_id << endl;
+                cout << " O_H = " << flit_tmp.ctrl_info.output_height << " O_W = " << flit_tmp.ctrl_info.output_width << endl;
+                ofm_cnt = 0;
+            }
+            else if (flit_tmp.data_type == OUTPUT_DATA && flit_tmp.flit_type != FLIT_TYPE_HEAD)
+            {
+                cout << " OFM[" << ofm_cnt << "] " << flit_tmp.payload.data << endl;
+                ofm_cnt++;
+            }
+
+            if (flit_tmp.flit_type == FLIT_TYPE_TAIL)
+                receivedPackets++;
+            stats.receivedFlit(sc_time_stamp().to_double() / GlobalParams::clock_period_ps, flit_tmp);
         }
         ack_rx.write(current_level_rx);
     }
 }
+
+// void MemNetworkInterface::rxProcess()
+// {
+//     if (reset.read())
+//     {
+//         ack_rx.write(0);
+//         current_level_rx = 0;
+//     }
+//     else
+//     {
+//         if (req_rx.read() == 1 - current_level_rx)
+//         {
+//             // if (!pebuffer.IsFull())
+//             // {
+//             //     Flit flit_tmp = flit_rx.read();
+//             //     // std::cout << " NI RX: => "
+//             //     //           << "Flit: " << flit_tmp.payload.data << endl;
+//             //     // std::cout << "Flit: " << flit_tmp.payload.data << endl;
+//             //     pebuffer.Push(flit_tmp);
+//             //     current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
+//             // }
+//         }
+//         ack_rx.write(current_level_rx);
+//     }
+// }
 
 void MemNetworkInterface::txProcess()
 {

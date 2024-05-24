@@ -111,27 +111,20 @@ inline ostream &operator<<(ostream &os, const Flit &flit)
         }
 
         os << flit.src_id << "->";
-
-        // switch (flit.dst_type)
-        // {
-        // case 0:
-        //     os << "P"; // PE
-        //     break;
-        // case 1:
-        //     os << "M"; // MEMORY
-        //     break;
-        // }
+        int dst;
         switch (flit.dst_type)
         {
         case 0:
             os << "P"; // PE
+            dst = flit.dst_id;
             break;
         case 1:
             os << "M"; // MEMORY
+            dst = (((flit.dst_id) - (GlobalParams::mesh_dim_x - 1)) / GlobalParams::mesh_dim_x);
             break;
         }
 
-        os << flit.dst_id << " VC " << flit.vc_id << ")";
+        os << dst << " VC " << flit.vc_id << ")";
     }
 
     return os;

@@ -100,8 +100,10 @@ SC_MODULE(NetworkInterface)
     ControlInfo transaction_ctrl;
     vector<int> ifmap_data;
     vector<int> weight_data;
+    vector<int> ofmap_data;
     int ifm_data_cnt, remain_ifm_size;
     int w_data_cnt, remain_w_size;
+    int ofm_data_cnt, remain_ofm_size;
     //* Make packet in different state: INSTRUCTION, INPUT_DATA, WEIGHT_DATA
     int makeP_state;
     //* Make flit in different state (same above)

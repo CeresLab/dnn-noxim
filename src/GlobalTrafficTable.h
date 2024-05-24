@@ -48,7 +48,7 @@ struct Transaction
 
 	vector<int> ifmap;
 	vector<int> weight;
-
+	vector<int> ofmap;
 	int consumed_flag;
 };
 
@@ -57,7 +57,6 @@ class GlobalTrafficTable
 
 public:
 	GlobalTrafficTable();
-
 	// Load traffic table from file. Returns true if ok, false otherwise
 	bool load(const char *fname);
 
@@ -79,10 +78,16 @@ public:
 	int getTransactionInfo(const int src_type, const int src_id, int dst_type, int &dst_id, int &op, int &actt,
 						   ControlInfo &ctrl, vector<int> &ifm, vector<int> &w);
 
+	void loadPETransaction(const int src_id, Transaction &pe_trans);
+	int getPETransactionInfo(const int src_type, const int src_id, int dst_type, int &dst_id, int &op, int &actt,
+							 ControlInfo &ctrl, vector<int> &ifm, vector<int> &w, vector<int> &ofm);
+
+	void initPETransaction();
+
 private:
 	vector<Communication> traffic_table;
-
 	vector<Transaction> transaction_table;
+	vector<vector<Transaction>> pe_transaction_table;
 };
 
 #endif

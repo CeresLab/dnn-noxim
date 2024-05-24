@@ -209,8 +209,11 @@ unsigned int GlobalStats::getReceivedPackets()
 	if (GlobalParams::topology == TOPOLOGY_MESH)
 	{
 		for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		{
 			for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
 				n += noc->t[x][y]->r->stats.getReceivedPackets();
+			n += noc->mt[y]->memni->receivedPackets;
+		}
 	}
 	else // other delta topologies
 	{
@@ -228,6 +231,7 @@ unsigned int GlobalStats::getReceivedFlits()
 	if (GlobalParams::topology == TOPOLOGY_MESH)
 	{
 		for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		{
 			for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
 			{
 				n += noc->t[x][y]->r->stats.getReceivedFlits();
@@ -235,6 +239,8 @@ unsigned int GlobalStats::getReceivedFlits()
 				drained_total += noc->t[x][y]->r->local_drained;
 #endif
 			}
+			n += noc->mt[y]->memni->stats.getReceivedFlits();
+		}
 	}
 	else // other delta topologies
 	{

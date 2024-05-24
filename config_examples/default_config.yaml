@@ -165,4 +165,4 @@ probability_of_retransmission: 0.01
 traffic_distribution: TRANSACTION_BASED
 # when traffic table based is specified, use the following
 # configuration file
-traffic_table_filename: "transaction.txt"
+traffic_table_filename: "transaction_wb.txt"

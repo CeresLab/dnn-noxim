@@ -72,6 +72,8 @@ SC_MODULE(ProcessingElement)
     sc_uint<32> output_buffer[8 * 8];
     int i;
     int makeP_state;
+    int compute_state;
+    int cycle_cnt;
 
     /*===================================================================================*/
 
@@ -80,9 +82,10 @@ SC_MODULE(ProcessingElement)
     void rxProcess();      // The receiving process
     void txProcess();      // The transmitting process
     void computeProcess(); // The transmitting process
-
+    void writeBack();
+    void computingCycle();
     /*===================================================================================*/
-    void Convolution2D();
+    void Convolution2D(int &cycle_cnt);
     void FullyConnected();
     void Pooling();
     void DepthWise();
@@ -90,6 +93,7 @@ SC_MODULE(ProcessingElement)
     int ReLU(int a);
     /*===================================================================================*/
 
+    GlobalTrafficTable *transaction_table; //* Reference to the Global transaction Table
     Flit nextFlit();
 
     // Constructor

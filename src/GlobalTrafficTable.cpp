@@ -295,3 +295,51 @@ int GlobalTrafficTable::getTransactionInfo(const int src_type, const int src_id,
 	w.clear();
 	return -1;
 }
+
+void GlobalTrafficTable::initPETransaction()
+{
+	vector<Transaction> empty_vector;
+	pe_transaction_table.push_back(empty_vector);
+}
+
+void GlobalTrafficTable::loadPETransaction(const int src_id, Transaction &pe_trans)
+{
+	pe_transaction_table[src_id].push_back(pe_trans);
+	cout << "loadPETransaction" << endl;
+	cout << "dst_type: " << pe_trans.dst_type << "dst: " << pe_trans.dst << endl;
+	cout << "src_type: " << pe_trans.src_type << "src: " << pe_trans.src << endl;
+
+	for (long unsigned int i = 0; i < pe_trans.ofmap.size(); i++)
+		cout << "OM: " << pe_trans.ofmap[i] << " ";
+
+	cout << endl;
+
+	// wb_trans.consumed_flag = 0;
+}
+
+int GlobalTrafficTable::getPETransactionInfo(const int src_type, const int src_id, int dst_type, int &dst_id, int &op, int &actt,
+											 ControlInfo &ctrl, vector<int> &ifm, vector<int> &w, vector<int> &ofm)
+{
+	for (unsigned int i = 0; i < pe_transaction_table[src_id].size(); i++)
+	{
+		if (pe_transaction_table[src_id][i].src == src_id && pe_transaction_table[src_id][i].src_type == src_type && !pe_transaction_table[src_id][i].consumed_flag)
+		{
+			dst_type = 1;
+			dst_id = pe_transaction_table[src_id][i].dst;
+			op = pe_transaction_table[src_id][i].operation_type;
+			actt = pe_transaction_table[src_id][i].activation_type;
+			ctrl = pe_transaction_table[src_id][i].ctrl_info;
+			ifm = pe_transaction_table[src_id][i].ifmap;
+			w = pe_transaction_table[src_id][i].weight;
+			ofm = pe_transaction_table[src_id][i].ofmap;
+
+			pe_transaction_table[src_id][i].consumed_flag = 1;
+			return 1;
+		}
+		else
+			continue;
+	}
+
+	ofm.clear();
+	return -1;
+}

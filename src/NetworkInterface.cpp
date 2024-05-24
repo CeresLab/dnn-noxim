@@ -52,6 +52,7 @@ void NetworkInterface::txProcess()
         weight_data.clear();
         ifm_data_cnt = remain_ifm_size = 0;
         w_data_cnt = remain_w_size = 0;
+        ofm_data_cnt = remain_ofm_size = 0;
         makeP_state = INSTRUCTION;
         makeF_state = INSTRUCTION;
         remaining_traffic = 0;
@@ -179,7 +180,10 @@ Flit NetworkInterface::nextFlit()
         flit.act_type = transaction_act;
         flit.payload.data = 0;
         flit.data_type = INSTRUCTION;
-        makeF_state = INPUT_DATA;
+        if (ofmap_data.size() == 0)
+            makeF_state = INPUT_DATA;
+        else
+            makeF_state = OUTPUT_DATA;
     }
     else if (makeF_state == INPUT_DATA && packet.size != packet.flit_left)
     {
@@ -195,6 +199,14 @@ Flit NetworkInterface::nextFlit()
         remain_w_size -= 1;
         flit.data_type = WEIGHT_DATA;
         if (remain_w_size == 0)
+            makeF_state = INSTRUCTION;
+    }
+    else if (makeF_state == OUTPUT_DATA && packet.size != packet.flit_left)
+    {
+        flit.payload.data = ofmap_data[ofmap_data.size() - remain_ofm_size];
+        remain_ofm_size -= 1;
+        flit.data_type = OUTPUT_DATA;
+        if (remain_ofm_size == 0)
             makeF_state = INSTRUCTION; // TODO: Confirm WB state along with PE injected traffic
     }
 
@@ -314,39 +326,58 @@ bool NetworkInterface::canShot(Packet &packet)
             return false;
 
         //* Get the next transaction while finishing previous traffic
-        if (ifm_data_cnt == 0 && w_data_cnt == 0 && remain_ifm_size == 0 && remain_w_size == 0)
+        // if (ifm_data_cnt == 0 && w_data_cnt == 0 && remain_ifm_size == 0 && remain_w_size == 0)
+        // {
+        //     remaining_traffic = transaction_table->getTransactionInfo(0, local_id, transaction_dst_type, transaction_dst, transaction_opt,
+        //                                                               transaction_act, transaction_ctrl,
+        //                                                               ifmap_data, weight_data);
+        //     ifm_data_cnt = ifmap_data.size();
+        //     remain_ifm_size = ifmap_data.size();
+        //     w_data_cnt = weight_data.size();
+        //     remain_w_size = weight_data.size();
+        //     // cout << "ifm cnt: " << ifm_data_cnt << " " << remain_ifm_size << endl;
+        // }
+
+        //* Get the write back transaction while finishing computation
+        if (ofm_data_cnt == 0 && remain_ofm_size == 0)
         {
-            remaining_traffic = transaction_table->getTransactionInfo(0, local_id, transaction_dst_type, transaction_dst, transaction_opt,
-                                                                      transaction_act, transaction_ctrl,
-                                                                      ifmap_data, weight_data);
-            ifm_data_cnt = ifmap_data.size();
-            remain_ifm_size = ifmap_data.size();
-            w_data_cnt = weight_data.size();
-            remain_w_size = weight_data.size();
+            remaining_traffic = transaction_table->getPETransactionInfo(0, local_id, transaction_dst_type, transaction_dst, transaction_opt,
+                                                                        transaction_act, transaction_ctrl,
+                                                                        ifmap_data, weight_data, ofmap_data);
+            // ifm_data_cnt = ifmap_data.size();
+            // remain_ifm_size = ifmap_data.size();
+            // w_data_cnt = weight_data.size();
+            // remain_w_size = weight_data.size();
+            ofm_data_cnt = ofmap_data.size();
+            remain_ofm_size = ofmap_data.size();
             // cout << "ifm cnt: " << ifm_data_cnt << " " << remain_ifm_size << endl;
+            // cout << "WRITE BACK" << endl;
         }
 
         //* Make the packet in different state and size
         if (remaining_traffic > 0)
         {
             int vc = randInt(0, GlobalParams::n_virtual_channels - 1);
-
             if (makeP_state == INSTRUCTION)
             {
-                packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, 2);
-                makeP_state = INPUT_DATA;
+                packet.make(0, local_id, 1, transaction_dst, vc, now, 2);
+                if (ofmap_data.size() == 0)
+                    makeP_state = INPUT_DATA;
+                else
+                    makeP_state = OUTPUT_DATA;
+
                 // cout << "INSTRUCTION PP\n";
             }
             else if (makeP_state == INPUT_DATA)
             {
                 if (ifm_data_cnt - 8 > 0)
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, 8 + 1);
+                    packet.make(0, local_id, 1, transaction_dst, vc, now, 8 + 1);
                     ifm_data_cnt -= 8;
                 }
                 else
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, ifm_data_cnt + 1);
+                    packet.make(0, local_id, 1, transaction_dst, vc, now, ifm_data_cnt + 1);
                     ifm_data_cnt = 0;
                     makeP_state = WEIGHT_DATA;
                 }
@@ -356,20 +387,35 @@ bool NetworkInterface::canShot(Packet &packet)
             {
                 if (w_data_cnt - 8 > 0)
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, 8 + 1);
+                    packet.make(0, local_id, 1, transaction_dst, vc, now, 8 + 1);
                     w_data_cnt -= 8;
                 }
                 else
                 {
-                    packet.make(0, local_id, transaction_dst_type, transaction_dst, vc, now, w_data_cnt + 1);
+                    packet.make(0, local_id, 1, transaction_dst, vc, now, w_data_cnt + 1);
                     w_data_cnt = 0;
+                    makeP_state = INSTRUCTION;
+                }
+                // cout << "WEIGHT_DATA PP\n";
+            }
+            else if (makeP_state == OUTPUT_DATA)
+            {
+                if (ofm_data_cnt - 8 > 0)
+                {
+                    packet.make(0, local_id, 1, transaction_dst, vc, now, 8 + 1);
+                    ofm_data_cnt -= 8;
+                }
+                else
+                {
+                    packet.make(0, local_id, 1, transaction_dst, vc, now, ofm_data_cnt + 1);
+                    ofm_data_cnt = 0;
                     makeP_state = INSTRUCTION; // TODO: Confirm WB state along with PE injected traffic
                 }
                 // cout << "WEIGHT_DATA PP\n";
             }
             shot = true;
 
-            if (ifm_data_cnt == 0 && w_data_cnt == 0)
+            if (ifm_data_cnt == 0 && w_data_cnt == 0 && ofm_data_cnt == 0)
                 remaining_traffic = -1;
         }
         else
@@ -380,285 +426,6 @@ bool NetworkInterface::canShot(Packet &packet)
 
     return shot;
 }
-
-// int NetworkInterface::findRandomDestination(int id, int hops)
-// {
-//     assert(GlobalParams::topology == TOPOLOGY_MESH);
-
-//     int inc_y = rand() % 2 ? -1 : 1;
-//     int inc_x = rand() % 2 ? -1 : 1;
-
-//     Coord current = id2Coord(id);
-
-//     for (int h = 0; h < hops; h++)
-//     {
-
-//         if (current.x == 0)
-//             if (inc_x < 0)
-//                 inc_x = 0;
-
-//         if (current.x == GlobalParams::mesh_dim_x - 1)
-//             if (inc_x > 0)
-//                 inc_x = 0;
-
-//         if (current.y == 0)
-//             if (inc_y < 0)
-//                 inc_y = 0;
-
-//         if (current.y == GlobalParams::mesh_dim_y - 1)
-//             if (inc_y > 0)
-//                 inc_y = 0;
-
-//         if (rand() % 2)
-//             current.x += inc_x;
-//         else
-//             current.y += inc_y;
-//     }
-//     return coord2Id(current);
-// }
-
-// int roulette()
-// {
-//     int slices = GlobalParams::mesh_dim_x + GlobalParams::mesh_dim_y - 2;
-
-//     double r = rand() / (double)RAND_MAX;
-
-//     for (int i = 1; i <= slices; i++)
-//     {
-//         if (r < (1 - 1 / double(2 << i)))
-//         {
-//             return i;
-//         }
-//     }
-//     assert(false);
-//     return 1;
-// }
-
-// Packet NetworkInterface::trafficULocal()
-// {
-//     Packet p;
-//     p.src_id = local_id;
-
-//     int target_hops = roulette();
-
-//     p.dst_id = findRandomDestination(local_id, target_hops);
-
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-
-//     return p;
-// }
-
-// Packet NetworkInterface::trafficRandom()
-// {
-//     Packet p;
-//     p.src_id = local_id;
-//     double rnd = rand() / (double)RAND_MAX;
-//     double range_start = 0.0;
-//     int max_id;
-
-//     if (GlobalParams::topology == TOPOLOGY_MESH)
-//         max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y) - 1; // Mesh
-//     else                                                                    // other delta topologies
-//         max_id = GlobalParams::n_delta_tiles - 1;
-
-//     // Random destination distribution
-//     do
-//     {
-//         p.dst_id = randInt(0, max_id);
-
-//         // check for hotspot destination
-//         for (size_t i = 0; i < GlobalParams::hotspots.size(); i++)
-//         {
-
-//             if (rnd >= range_start && rnd < range_start + GlobalParams::hotspots[i].second)
-//             {
-//                 if (local_id != GlobalParams::hotspots[i].first)
-//                 {
-//                     p.dst_id = GlobalParams::hotspots[i].first;
-//                 }
-//                 break;
-//             }
-//             else
-//                 range_start += GlobalParams::hotspots[i].second; // try next
-//         }
-// #ifdef DEADLOCK_AVOIDANCE
-//         assert((GlobalParams::topology == TOPOLOGY_MESH));
-//         if (p.dst_id % 2 != 0)
-//         {
-//             p.dst_id = (p.dst_id + 1) % 256;
-//         }
-// #endif
-
-//     } while (p.dst_id == p.src_id);
-
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-
-//     return p;
-// }
-// // TODO: for testing only
-// Packet NetworkInterface::trafficTest()
-// {
-//     Packet p;
-//     p.src_id = local_id;
-//     p.dst_id = 10;
-
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-
-//     return p;
-// }
-
-// Packet NetworkInterface::trafficTranspose1()
-// {
-//     assert(GlobalParams::topology == TOPOLOGY_MESH);
-//     Packet p;
-//     p.src_id = local_id;
-//     Coord src, dst;
-
-//     // Transpose 1 destination distribution
-//     src.x = id2Coord(p.src_id).x;
-//     src.y = id2Coord(p.src_id).y;
-//     dst.x = GlobalParams::mesh_dim_x - 1 - src.y;
-//     dst.y = GlobalParams::mesh_dim_y - 1 - src.x;
-//     fixRanges(src, dst);
-//     p.dst_id = coord2Id(dst);
-
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-
-//     return p;
-// }
-
-// Packet NetworkInterface::trafficTranspose2()
-// {
-//     assert(GlobalParams::topology == TOPOLOGY_MESH);
-//     Packet p;
-//     p.src_id = local_id;
-//     Coord src, dst;
-
-//     // Transpose 2 destination distribution
-//     src.x = id2Coord(p.src_id).x;
-//     src.y = id2Coord(p.src_id).y;
-//     dst.x = src.y;
-//     dst.y = src.x;
-//     fixRanges(src, dst);
-//     p.dst_id = coord2Id(dst);
-
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-
-//     return p;
-// }
-
-// void NetworkInterface::setBit(int &x, int w, int v)
-// {
-//     int mask = 1 << w;
-
-//     if (v == 1)
-//         x = x | mask;
-//     else if (v == 0)
-//         x = x & ~mask;
-//     else
-//         assert(false);
-// }
-
-// int NetworkInterface::getBit(int x, int w)
-// {
-//     return (x >> w) & 1;
-// }
-
-// inline double NetworkInterface::log2ceil(double x)
-// {
-//     return ceil(log(x) / log(2.0));
-// }
-
-// Packet NetworkInterface::trafficBitReversal()
-// {
-
-//     int nbits =
-//         (int)
-//             log2ceil((double)(GlobalParams::mesh_dim_x *
-//                               GlobalParams::mesh_dim_y));
-//     int dnode = 0;
-//     for (int i = 0; i < nbits; i++)
-//         setBit(dnode, i, getBit(local_id, nbits - i - 1));
-
-//     Packet p;
-//     p.src_id = local_id;
-//     p.dst_id = dnode;
-
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-
-//     return p;
-// }
-
-// Packet NetworkInterface::trafficShuffle()
-// {
-
-//     int nbits =
-//         (int)
-//             log2ceil((double)(GlobalParams::mesh_dim_x *
-//                               GlobalParams::mesh_dim_y));
-//     int dnode = 0;
-//     for (int i = 0; i < nbits - 1; i++)
-//         setBit(dnode, i + 1, getBit(local_id, i));
-//     setBit(dnode, 0, getBit(local_id, nbits - 1));
-
-//     Packet p;
-//     p.src_id = local_id;
-//     p.dst_id = dnode;
-
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-
-//     return p;
-// }
-
-// Packet NetworkInterface::trafficButterfly()
-// {
-
-//     int nbits = (int)log2ceil((double)(GlobalParams::mesh_dim_x *
-//                                        GlobalParams::mesh_dim_y));
-//     int dnode = 0;
-//     for (int i = 1; i < nbits - 1; i++)
-//         setBit(dnode, i, getBit(local_id, i));
-//     setBit(dnode, 0, getBit(local_id, nbits - 1));
-//     setBit(dnode, nbits - 1, getBit(local_id, 0));
-
-//     Packet p;
-//     p.src_id = local_id;
-//     p.dst_id = dnode;
-
-//     p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-//     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-//     p.size = p.flit_left = getRandomSize();
-
-//     return p;
-// }
-
-// void NetworkInterface::fixRanges(const Coord src,
-//                                   Coord &dst)
-// {
-//     // Fix ranges
-//     if (dst.x < 0)
-//         dst.x = 0;
-//     if (dst.y < 0)
-//         dst.y = 0;
-//     if (dst.x >= GlobalParams::mesh_dim_x)
-//         dst.x = GlobalParams::mesh_dim_x - 1;
-//     if (dst.y >= GlobalParams::mesh_dim_y)
-//         dst.y = GlobalParams::mesh_dim_y - 1;
-// }
 
 int NetworkInterface::getRandomSize()
 {
