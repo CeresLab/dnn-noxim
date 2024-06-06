@@ -451,6 +451,7 @@ void GlobalStats::showStats(std::ostream &out, bool detailed)
 	// out << endl;
 #endif
 
+	cout << "===============================================================" << endl;
 	// int total_cycles = GlobalParams::simulation_time - GlobalParams::stats_warm_up_time;
 	out << "% Total received packets: " << getReceivedPackets() << endl;
 	out << "% Total received flits: " << getReceivedFlits() << endl;
@@ -462,6 +463,20 @@ void GlobalStats::showStats(std::ostream &out, bool detailed)
 	out << "% Total energy (J): " << getTotalPower() << endl;
 	out << "% \tDynamic energy (J): " << getDynamicPower() << endl;
 	out << "% \tStatic energy (J): " << getStaticPower() << endl;
+
+	unsigned int tmp = 0;
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	{
+		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+		{
+			if (noc->t[x][y]->ni->last_received_flit_time > tmp)
+				tmp = noc->t[x][y]->ni->last_received_flit_time;
+		}
+		if (noc->mt[y]->memni->last_received_flit_time > tmp)
+			tmp = noc->mt[y]->memni->last_received_flit_time;
+	}
+	cout << "===============================================================" << endl;
+	cout << "% Total latency (cycles) = " << (tmp - GlobalParams::reset_time) << endl;
 
 	if (GlobalParams::show_buffer_stats)
 		showBufferStats(out);

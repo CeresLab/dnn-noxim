@@ -48,6 +48,10 @@ void MemNetworkInterface::rxProcess()
             if (flit_tmp.flit_type == FLIT_TYPE_TAIL)
                 receivedPackets++;
             stats.receivedFlit(sc_time_stamp().to_double() / GlobalParams::clock_period_ps, flit_tmp);
+
+            //* For latency information
+            if (last_received_flit_time < sc_time_stamp().to_double() / GlobalParams::clock_period_ps)
+                last_received_flit_time = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
         }
         ack_rx.write(current_level_rx);
     }

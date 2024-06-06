@@ -74,6 +74,11 @@ using namespace std;
 #define VERBOSE_MEDIUM "VERBOSE_MEDIUM"
 #define VERBOSE_HIGH "VERBOSE_HIGH"
 
+// Define register size of PE
+#define INPUT_BUFFER 8 // 11X11
+#define WEIGHT_BUFFER 8
+#define OUTPUT_BUFFER 8
+
 typedef struct
 {
     map<pair<int, int>, double> front;

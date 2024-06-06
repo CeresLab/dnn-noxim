@@ -35,6 +35,10 @@ void NetworkInterface::rxProcess()
                 // std::cout << "Flit: " << flit_tmp.payload.data << endl;
                 pebuffer.Push(flit_tmp);
                 current_level_rx = 1 - current_level_rx; // Negate the old value for Alternating Bit Protocol (ABP)
+
+                //* For latency information
+                if (last_received_flit_time < sc_time_stamp().to_double() / GlobalParams::clock_period_ps)
+                    last_received_flit_time = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
             }
         }
         ack_rx.write(current_level_rx);

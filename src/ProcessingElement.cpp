@@ -212,6 +212,7 @@ void ProcessingElement::computeProcess()
                     else
                     {
                         state = WB;
+                        cout << "PE: " << local_id << " Convolution2D done!" << endl;
                         cout << "TO Write back state !!!!" << endl;
                     }
                 }

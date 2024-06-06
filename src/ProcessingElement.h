@@ -18,6 +18,7 @@
 #include "Buffer.h"
 #include "GlobalTrafficTable.h"
 #include "Utils.h"
+#include "GlobalParams.h"
 
 using namespace std;
 
@@ -63,13 +64,13 @@ SC_MODULE(ProcessingElement)
     int ACT;
     int O_H;
     int O_W;
-    int O_M[8][8];
+    int O_M[OUTPUT_BUFFER][OUTPUT_BUFFER];
     int WB_DST;
     State state;
-    sc_uint<32> input_buffer[8 * 8];
-    sc_uint<32> weight_buffer[8 * 8];
+    sc_uint<32> input_buffer[INPUT_BUFFER * INPUT_BUFFER];
+    sc_uint<32> weight_buffer[WEIGHT_BUFFER * WEIGHT_BUFFER];
     sc_uint<32> psum_buffer[8 * 8];
-    sc_uint<32> output_buffer[8 * 8];
+    sc_uint<32> output_buffer[OUTPUT_BUFFER * OUTPUT_BUFFER];
     int i;
     int makeP_state;
     int compute_state;

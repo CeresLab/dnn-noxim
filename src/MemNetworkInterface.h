@@ -97,6 +97,8 @@ SC_MODULE(MemNetworkInterface)
     int makeF_state;
     //* Keep transaction and produce the packet series
     int remaining_traffic;
+    //*
+    unsigned int last_received_flit_time = 0;
 
     // Constructor
     SC_CTOR(MemNetworkInterface)
