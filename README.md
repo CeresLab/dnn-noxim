@@ -75,8 +75,7 @@ w : Kernel values (no values needed for Pooling)
 
 ######################## Execution Steps Start ########################
 
-# Note: Ensure the last lines in the default_config.yaml file are
-# traffic_distribution: TRANSACTION_BASED and traffic_table_filename: "transaction_wb.txt"
+# Note: Ensure the last lines in the default_config.yaml file are traffic_distribution: TRANSACTION_BASED and traffic_table_filename: "transaction_wb.txt"
 
 # Enter the bin folder inside dnn-noxim
 
@@ -162,8 +161,7 @@ w : kernel值(如為Pooling則不需給值)
 
 ######################## 執行步驟開始 ########################
 
-# 注意 : 確保default_config.yaml 檔案內最後為
-# traffic_distribution: TRANSACTION_BASED 以及 traffic_table_filename:"transaction_wb.txt"
+# 注意 : 確保default_config.yaml 檔案內最後為traffic_distribution: TRANSACTION_BASED 以及 traffic_table_filename:"transaction_wb.txt"
 
 # 進入dnn-noxim內bin資料夾
 
