@@ -1,175 +1,237 @@
-# Noxim
-NoC simulation for research matrix implementation
 
-<!-- ###################################################### -->
-<!-- #                    Instruction                     # -->
-<!-- ###################################################### -->
+# Noxim  
+NoC Simulation for Research Matrix Implementation  
 
+<!-- ###################################################### -->  
+<!-- #                    Instructions                    # -->  
+<!-- ###################################################### -->  
 
-############################ Installation Steps Start ############################
+---
 
-# Clone DNN-Noxim from Github
+## Installation Steps  
 
+1. Clone DNN-Noxim from Github:
+
+    ```bash
     git clone https://github.com/CeresLab/dnn-noxim.git
+    ```
 
-# Enter the dnn-noxim folder
+2. Enter the DNN-Noxim directory:
 
+    ```bash
     cd dnn-noxim/
+    ```
 
-# Run run.sh found in the path to install SystemC, YAML, and other related files
+3. Run the `run.sh` script to install **SystemC**, **YAML**, and other related dependencies:
 
+    ```bash
     bash run.sh
+    ```
 
+---
 
+## File Preparation  
 
-######################## Preparation of Required Files Steps Start ########################
+1. Navigate to the `bin` folder inside `dnn-noxim`:
 
-# Enter the bin folder inside dnn-noxim
-
+    ```bash
     cd bin/
+    ```
 
-# In the bin folder, prepare transaction_wb.txt with the required format
-# A sample file is already available in the bin folder for reference (transaction.txt and transaction_wb.txt)
+2. Prepare the `transaction_wb.txt` file following the required format.  
+   Sample files (`transaction.txt` and `transaction_wb.txt`) are available in the `bin` folder for reference.
 
-# First line 
-# >[src_type] [src] [dst_type] [dst]
+### File Format:  
 
-src_type : 0 means the source node is PE, 1 means the source node is Memory
-src : Source node ID
-dst_type : 0 means the destination node is PE, 1 means the destination node is Memory
-dst : Destination node ID
+- **First line:**  
+  ```  
+  [src_type] [src] [dst_type] [dst]
+  ```  
+  - `src_type`: 0 for PE, 1 for Memory  
+  - `src`: Source node ID  
+  - `dst_type`: 0 for PE, 1 for Memory  
+  - `dst`: Destination node ID  
 
-# Second line
-# >? [operation_type] [activation_type]
+- **Second line:**  
+  ```  
+  >? [operation_type] [activation_type]
+  ```  
+  - `operation_type`: 0 for Convolution, 1 for Fully connect, 2 for Pooling  
+  - `activation_type`: 0 for No ReLU, 1 for ReLU  
 
-operation_type : 0 means Convolution, 1 means Fully connect, 2 means Pooling
-activation_type : 0 means no ReLU, 1 means ReLU
+- **Third line:**  
+  ```  
+  >! [0 < ctrl[0] <= 8] [0 < ctrl[1] <= 8] [ctrl[2]] [0 < ctrl[3] <= 8] [0 < ctrl[4] <= 8] [ctrl[5]]
+  ```  
+  - `kw`: Kernel width  
+  - `kh`: Kernel height  
+  - `stride`: Stride size  
+  - `ifw`: Input width  
+  - `ifh`: Input height  
+  - `wb_dst`: Write-back destination node ID, or -1 if not required  
 
-# Third line
-# >! [0 < ctrl[0] <= 8] [0 < ctrl[1] <= 8] [ctrl[2]] [0 < ctrl[3] <= 8] [0 < ctrl[4] <= 8] [ctrl[5]]
+- **Fourth line:**  
+  ```  
+  >% [ifm: ctrl[3]*ctrl[4] data, w: ctrl[0]*ctrl[1] data]
+  ```  
+  - `ifm`: Input data (for example, if the input size is 4x4, provide 16 values)  
+  - `w`: Kernel data (no data required for Pooling)
 
-kw : Kernel width
-kh : Kernel height
-stride : Kernel stride
-ifw : Input width
-ifh : Input height
-wb_dst : Write-back destination node ID, set to -1 if no write-back is needed
+---
 
-# Fourth line
-# >% [ifm: ctrl[3]*ctrl[4] data, w: ctrl[0]*ctrl[1] data]
+## Compilation Steps  
 
-ifm : Input values (for example, if the input size is 4x4, provide 16 values)
-w : Kernel values (no values needed for Pooling)
+- **Note:** Recompilation is unnecessary if you only modify `transaction.txt` (or `transaction_wb.txt`) or YAML files.
 
-######################## Compilation Steps Start ########################
+1. Enter the `bin` folder:
 
-# Note: If only modifying transaction.txt (transaction_wb.txt) or YAML files, recompilation is not necessary
+    ```bash
+    cd bin/
+    ```
 
-# Enter the bin folder inside dnn-noxim
+2. Compile the files:
 
-# Compile the files
-
+    ```bash
     make -j12
+    ```
 
+---
 
+## Simulation Execution  
 
-######################## Execution Steps Start ########################
+- **Note:** Ensure the `default_config.yaml` file contains the following at the end:  
+  ```yaml
+  traffic_distribution: TRANSACTION_BASED
+  traffic_table_filename: "transaction_wb.txt"
+  ```
 
-# Note: Ensure the last lines in the default_config.yaml file are traffic_distribution: TRANSACTION_BASED and traffic_table_filename: "transaction_wb.txt"
+1. Enter the `bin` folder:
 
-# Enter the bin folder inside dnn-noxim
+    ```bash
+    cd bin/
+    ```
 
-# Run the simulation
+2. Run the simulation:
 
+    ```bash
     ./noxim -config ../config_examples/default_config.yaml > sim.out
+    ```
 
-# The simulation result file will be placed in the bin folder under the name sim.out
+3. Simulation results will be saved in the `sim.out` file located in the `bin` folder.
 
+---
 
+# 中文說明
 
-<!-- ###################################################### -->
-<!-- #                      中文說明                       # -->
-<!-- ###################################################### -->
+---
 
-############################ 安裝步驟開始 ############################
+## 安裝步驟
 
-# 從Github複製DNN-Noxim
+1. 從 Github 複製 DNN-Noxim：
 
+    ```bash
     git clone https://github.com/CeresLab/dnn-noxim.git
+    ```
 
-# 進入dnn-noxim資料夾
+2. 進入 DNN-Noxim 資料夾：
 
+    ```bash
     cd dnn-noxim/
+    ```
 
-# 執行在路徑中找到的 run.sh，安裝SystemC 與 YAML等相關檔案 
+3. 執行 `run.sh` 來安裝 **SystemC**、**YAML** 等相關依賴：
 
+    ```bash
     bash run.sh
+    ```
 
+---
 
+## 準備所需檔案  
 
-######################## 準備所需檔案步驟開始 ########################
+1. 進入 `dnn-noxim` 資料夾內的 `bin` 資料夾：
 
-# 進入dnn-noxim內bin資料夾
-
+    ```bash
     cd bin/
+    ```
 
-# 在bin資料夾準備transaction_wb.txt需定義之格式
-# bin資料夾內已有範例檔案可參考(transaction.txt 以及transaction_wb.txt)
+2. 在 `bin` 資料夾中，依據格式準備 `transaction_wb.txt`。  
+   `bin` 資料夾內已有範例檔案 (`transaction.txt` 及 `transaction_wb.txt`) 可供參考。
 
-# 第一行 >
-# [src_type] [src] [dst_type] [dst]
+### 檔案格式：  
 
-src_type : 0代表源節點為PE 1代表源節點為Memory
-src : 源節點ID
-dst_type : 0代表目的地節點為PE 1代表目的地節點為Memory
-dst : 目的地節點ID
+- **第一行：**  
+  ```  
+  [src_type] [src] [dst_type] [dst]
+  ```  
+  - `src_type`: 0 代表 PE，1 代表 Memory  
+  - `src`: 源節點 ID  
+  - `dst_type`: 0 代表 PE，1 代表 Memory  
+  - `dst`: 目的節點 ID  
 
-# 第二行
-# >? [operation_type] [activation_type]
+- **第二行：**  
+  ```  
+  >? [operation_type] [activation_type]
+  ```  
+  - `operation_type`: 0 代表 Convolution，1 代表 Fully connect，2 代表 Pooling  
+  - `activation_type`: 0 代表不做 ReLU，1 代表做 ReLU  
 
-opteration_type : 0代表做Convolution 1代表做Fully connect 2代表做Pooling
-activation_type : 0代表不做ReLU 1代表做ReLU
+- **第三行：**  
+  ```  
+  >! [0 < ctrl[0] <= 8] [0 < ctrl[1] <= 8] [ctrl[2]] [0 < ctrl[3] <= 8] [0 < ctrl[4] <= 8] [ctrl[5]]
+  ```  
+  - `kw`: Kernel 寬度  
+  - `kh`: Kernel 長度  
+  - `stride`: 一次移動的步數  
+  - `ifw`: 輸入寬度  
+  - `ifh`: 輸入長度  
+  - `wb_dst`: 寫回目的地節點 ID，不需要寫回則設為 -1  
 
-# 第三行
-# >! [0 < ctrl[0] <= 8] [0 < ctrl[1] <= 8] [ctrl[2]] [0 < ctrl[3] <= 8] [0 < ctrl[4] <= 8] [ctrl[5]]
+- **第四行：**  
+  ```  
+  >% [ifm: ctrl[3]*ctrl[4] data, w: ctrl[0]*ctrl[1] data]
+  ```  
+  - `ifm`: 輸入數據（例如輸入大小為 4x4 時，提供 16 個數值）  
+  - `w`: Kernel 數據（Pooling 不需要數據）  
 
-kw : Kernel寬度
-kh : Kernel長度
-stride : Kernel一次移動的跨步
-ifw : 輸入寬度
-ifh : 輸入長度
-wb_dst : 寫回目的地節點的ID 如不需寫回則設為-1 
+---
 
-# 第四行
-# >% [ifm: ctrl[3]*ctrl[4] data, w: ctrl[0]*ctrl[1] data]
+## 編譯步驟  
 
-ifm : 輸入值(如為4x4輸入大小則需給定16個值)
-w : kernel值(如為Pooling則不需給值)
+- **注意：** 若僅修改 `transaction.txt`（或 `transaction_wb.txt`）或 YAML 檔案，無需重新編譯。
 
+1. 進入 `bin` 資料夾：
 
+    ```bash
+    cd bin/
+    ```
 
-######################## 編譯步驟開始 ########################
+2. 編譯檔案：
 
-# 注意 : 如只修改transaction.txt(transaction_wb.txt)或yaml檔案不需重新編譯
-
-# 進入dnn-noxim內bin資料夾
-
-# 編譯檔案
+    ```bash
     make -j12
+    ```
 
+---
 
+## 執行步驟  
 
-######################## 執行步驟開始 ########################
+- **注意：** 確保 `default_config.yaml` 檔案末尾包含以下內容：  
+  ```yaml
+  traffic_distribution: TRANSACTION_BASED
+  traffic_table_filename: "transaction_wb.txt"
+  ```
 
-# 注意 : 確保default_config.yaml 檔案內最後為traffic_distribution: TRANSACTION_BASED 以及 traffic_table_filename:"transaction_wb.txt"
+1. 進入 `bin` 資料夾：
 
-# 進入dnn-noxim內bin資料夾
+    ```bash
+    cd bin/
+    ```
 
-# 執行模擬
+2. 執行模擬：
+
+    ```bash
     ./noxim -config ../config_examples/default_config.yaml > sim.out
+    ```
 
-# 模擬結果檔案放置在bin資料夾內的sim.out檔案
-
-
-
-
+3. 模擬結果將存放於 `bin` 資料夾內的 `sim.out` 檔案中。
