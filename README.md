@@ -45,7 +45,7 @@ NoC Simulation for Research Matrix Implementation
 
 - **First line:**  
   ```  
-  [src_type] [src] [dst_type] [dst]
+  #[src_type] [src] [dst_type] [dst]
   ```  
   - `src_type`: 0 for PE, 1 for Memory  
   - `src`: Source node ID  
