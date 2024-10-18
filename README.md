@@ -2,10 +2,7 @@
 # Noxim  
 NoC Simulation for Research Matrix Implementation  
 
-<!-- ###################################################### -->  
-<!-- #                    Instructions                    # -->  
-<!-- ###################################################### -->  
-
+# Instructions
 ---
 
 ## Installation Steps  
