@@ -240,10 +240,10 @@ bool GlobalTrafficTable::loadTransaction(const char *fname)
 					format++;
 				}
 
-				if (trans.operation_type == CONV2D || trans.operation_type == FC)
+				if (trans.operation_type == CONV2D || trans.operation_type == FC || trans.operation_type == POOLING)
 					assert(format == (ifm_data_cnt + w_data_cnt));
-				else if (trans.operation_type == POOLING)
-					assert(format == ifm_data_cnt);
+				// else if (trans.operation_type == POOLING)
+				// 	assert(format == ifm_data_cnt);
 			}
 			else
 			{
@@ -285,6 +285,9 @@ int GlobalTrafficTable::getTransactionInfo(const int src_type, const int src_id,
 			w = transaction_table[i].weight;
 
 			transaction_table[i].consumed_flag = 1;
+            cout << "getTransactionInfo" << endl;
+            cout << "src_type: " << transaction_table[i].src_type << " src: " << transaction_table[i].src << endl;
+            cout << "dst_type: " << transaction_table[i].dst_type << " dst: " << transaction_table[i].dst << endl;
 			return 1;
 		}
 		else
@@ -324,7 +327,7 @@ int GlobalTrafficTable::getPETransactionInfo(const int src_type, const int src_i
 	{
 		if (pe_transaction_table[src_id][i].src == src_id && pe_transaction_table[src_id][i].src_type == src_type && !pe_transaction_table[src_id][i].consumed_flag)
 		{
-			dst_type = 1;
+			dst_type = pe_transaction_table[src_id][i].dst_type;
 			dst_id = pe_transaction_table[src_id][i].dst;
 			op = pe_transaction_table[src_id][i].operation_type;
 			actt = pe_transaction_table[src_id][i].activation_type;
@@ -334,6 +337,7 @@ int GlobalTrafficTable::getPETransactionInfo(const int src_type, const int src_i
 			ofm = pe_transaction_table[src_id][i].ofmap;
 
 			pe_transaction_table[src_id][i].consumed_flag = 1;
+            cout << "getPETransactionInfo" << endl;
 			return 1;
 		}
 		else
